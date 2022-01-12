@@ -28,6 +28,7 @@
 // ----------------------------------------------------------------------------
 
 #include "app.h"
+#include <math.h>
 
 using namespace Eigen;
 using namespace std;
@@ -89,7 +90,7 @@ void CApp::BuildKDTree(const vector<T>& data, KDTree* tree)
 }
 
 template <typename T>
-void CApp::SearchKDTree(KDTree* tree, const T& input, 
+void CApp::SearchKDTree(KDTree* tree, const T& input,
 							std::vector<int>& indices,
 							std::vector<float>& dists, int nn)
 {
@@ -393,6 +394,31 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 {
 	printf("Pairwise rigid pose optimization\n");
 
+	std::ifstream file2("table.txt");
+	//---------------------------------------------------------------------
+    // read the constant values from tzt file
+    std::vector<std::vector<double> > constTable;
+    std::string line;
+    double value2;
+
+    int rowNum = 0;
+
+    // read in matrix
+
+    while(std::getline(file2, line)) {
+            std::vector<double> row;
+            std::istringstream iss(line);
+            while(iss >> value2){
+                    row.push_back(value2);
+            }
+            constTable.push_back(row);
+            rowNum = rowNum + 1;
+    }
+
+	//---------------------------------------------------------------------
+	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
+	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
+
 	double par;
 	int numIter = iteration_number_;
 	TransOutput_ = Eigen::Matrix4f::Identity();
@@ -525,10 +551,10 @@ Eigen::Matrix4f CApp::GetOutputTrans()
 	transtemp.block<3, 3>(0, 0) = R;
 	transtemp.block<3, 1>(0, 3) = -R*Means[1] + t*GlobalScale + Means[0];
 	transtemp(3, 3) = 1;
-	
+
 	return transtemp;
 }
-	
+
 void CApp::WriteTrans(const char* filepath)
 {
 	FILE* fid = fopen(filepath, "w");
@@ -569,9 +595,9 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 	return temp;
 }
 
-void CApp::BuildDenseCorrespondence(const Eigen::Matrix4f& trans, 
+void CApp::BuildDenseCorrespondence(const Eigen::Matrix4f& trans,
 		Correspondences& corres)
-{   
+{
 	int fi = 0;
 	int fj = 1;
 	Points pci = pointcloud_[fi];
@@ -603,7 +629,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	std::vector<std::pair<int, int> > corres;
 	Eigen::Matrix4f gth_trans = ReadTrans(gth);
 	BuildDenseCorrespondence(gth_trans, corres);
-	printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj, 
+	printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
 			(int)corres.size());
 
 	int ncorres = corres.size();
@@ -634,10 +660,22 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	//overlapping_ratio = (float)ncorres / min(
 	//		pointcloud_[fj].size(), pointcloud_[fj].size());
 	overlapping_ratio = (float)ncorres / pointcloud_[fj].size();
-	
+
 	// write errors
 	FILE* fid = fopen(output, "w");
-	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean, 
+	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
+}
+
+double CApp:robustcost(double r, double c, double alpha){
+	if (alpha == 2){
+    	return 0.5*pow(r/c,2);}
+	else if (alpha == 0){
+    	return log(0.5*pow(r/c,2) + 1);}
+	else if (alpha == -Inf){
+    	return 1 - exp(0.5*pow(r/c,2));}
+	else {
+    	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}
+
 }

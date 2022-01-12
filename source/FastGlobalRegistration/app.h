@@ -40,7 +40,7 @@
 #define TUPLE_MAX_CNT		1000	// Maximum tuple numbers.
 
 namespace fgr {
-  
+
 typedef std::vector<Eigen::Vector3f> Points;
 typedef std::vector<Eigen::VectorXf> Feature;
 typedef flann::Index<flann::L2<float> > KDTree;
@@ -69,6 +69,7 @@ public:
 	Eigen::Matrix4f GetOutputTrans();
 	double OptimizePairwise(bool decrease_mu_);
 	void Evaluation(const char* gth, const char* estimation, const char *output);
+    double robustcost(double r, double c, double alpha)
 
 private:
 	// containers
@@ -85,9 +86,9 @@ private:
 	// some internal functions
 	void ReadFeature(const char* filepath, Points& pts, Feature& feat);
 	void TransformPoints(Points& points, const Eigen::Matrix4f& Trans);
-	void BuildDenseCorrespondence(const Eigen::Matrix4f& gth, 
+	void BuildDenseCorrespondence(const Eigen::Matrix4f& gth,
 			Correspondences& corres);
-	
+
 	template <typename T>
 	void BuildKDTree(const std::vector<T>& data, KDTree* tree);
 	template <typename T>
