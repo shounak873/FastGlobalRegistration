@@ -70,6 +70,7 @@ public:
 	double OptimizePairwise(bool decrease_mu_);
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha)
+	double robustcostWeight(double r, double c, double alpha)
 
 private:
 	// containers

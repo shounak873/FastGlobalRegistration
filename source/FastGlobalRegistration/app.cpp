@@ -403,6 +403,8 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 
     int rowNum = 0;
 
+	int ConvergIter = 10;
+
     // read in matrix
 
     while(std::getline(file2, line)) {
@@ -419,49 +421,17 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
 	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
 
-	double par;
-	int numIter = iteration_number_;
-	TransOutput_ = Eigen::Matrix4f::Identity();
+	int maxalphaind = 1;
+	int maxcind = 0;
 
-	par = StartScale;
+	int lenalpha = alpha.size();
+	int lenc = c.size();
 
-	int i = 0;
-	int j = 1;
+	// selecting the best alpha and c by maximizing respective negative log-likelihoods
 
-	// make another copy of pointcloud_[j].
-	Points pcj_copy;
-	int npcj = pointcloud_[j].size();
-	pcj_copy.resize(npcj);
-	for (int cnt = 0; cnt < npcj; cnt++)
-		pcj_copy[cnt] = pointcloud_[j][cnt];
+	for (int itr = 0; itr < ConvergIter; itr++){
 
-	if (corres_.size() < 10)
-		return -1;
-
-	std::vector<double> s(corres_.size(), 1.0);
-
-	Eigen::Matrix4f trans;
-	trans.setIdentity();
-
-	for (int itr = 0; itr < numIter; itr++) {
-
-		// graduated non-convexity.
-		if (decrease_mu_)
-		{
-			if (itr % 4 == 0 && par > max_corr_dist_) {
-				par /= div_factor_;
-			}
-		}
-
-		const int nvariable = 6;	// 3 for rotation and 3 for translation
-		Eigen::MatrixXd JTJ(nvariable, nvariable);
-		Eigen::MatrixXd JTr(nvariable, 1);
-		Eigen::MatrixXd J(nvariable, 1);
-		JTJ.setZero();
-		JTr.setZero();
-
-		double r;
-		double r2 = 0.0;
+		std::vector<double> resnormvec;
 
 		for (int c = 0; c < corres_.size(); c++) {
 			int ii = corres_[c].first;
@@ -470,55 +440,145 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 			p = pointcloud_[i][ii];
 			q = pcj_copy[jj];
 			Eigen::Vector3f rpq = p - q;
-
-			int c2 = c;
-
-			float temp = par / (rpq.dot(rpq) + par);
-			s[c2] = temp * temp;
-
-			J.setZero();
-			J(1) = -q(2);
-			J(2) = q(1);
-			J(3) = -1;
-			r = rpq(0);
-			JTJ += J * J.transpose() * s[c2];
-			JTr += J * r * s[c2];
-			r2 += r * r * s[c2];
-
-			J.setZero();
-			J(2) = -q(0);
-			J(0) = q(2);
-			J(4) = -1;
-			r = rpq(1);
-			JTJ += J * J.transpose() * s[c2];
-			JTr += J * r * s[c2];
-			r2 += r * r * s[c2];
-
-			J.setZero();
-			J(0) = -q(1);
-			J(1) = q(0);
-			J(5) = -1;
-			r = rpq(2);
-			JTJ += J * J.transpose() * s[c2];
-			JTr += J * r * s[c2];
-			r2 += r * r * s[c2];
-
-			r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
+			double resnorm = rpq.norm();
+			resnormvec.push_back(resnorm);
 		}
 
-		Eigen::MatrixXd result(nvariable, 1);
-		result = -JTJ.llt().solve(JTr);
+	    // firstly, keep c constant and maximize with respect to alpha
+		std::vector<double> likevec;
+		for(int i =0; i < lenalpha; i++){
+			double totallike = 0.0;
+			for(auto it2 : resnormvec){
+				totallike += exp(-robustcost(it2,c[maxcind], alpha[i]))/constTable[i][cind];
+			}
+			likevec.push_back(totallike)
+		}
 
-		Eigen::Affine3d aff_mat;
-		aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
-			* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
-			* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
-		aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
+	    std::vector<double>::iterator result;
 
-		Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
+	    result = std::max_element(likevec.begin(), likevec.end());
+	    maxalphaind = std::distance(likevec.begin(), result);
 
-		trans = delta * trans;
-		TransformPoints(pcj_copy, delta);
+		// secondly, keep alpha constant and maximize with respect to c
+		std::vector<double> likevec;
+		for(int j =0; j < lenc; j++){
+			totallike = 0.0;
+			for(auto it2 : resnormvec){
+				totallike += exp(-robustcost(it2,c[j], alpha[maxalphaind]))/constTable[maxalphaind][j];
+			}
+			likevec.push_back(totallike)
+		}
+
+	    std::vector<double>::iterator result;
+
+	    result = std::max_element(likevec.begin(), likevec.end());
+	    maxcind = std::distance(likevec.begin(), result);
+
+		// thirdly, do iteratively re-weighted least squares
+		double par;
+		int numIter = iteration_number_;
+		TransOutput_ = Eigen::Matrix4f::Identity();
+
+		par = StartScale;
+
+		int i = 0;
+		int j = 1;
+
+		// make another copy of pointcloud_[j].
+		Points pcj_copy;
+		int npcj = pointcloud_[j].size();
+		pcj_copy.resize(npcj);
+		for (int cnt = 0; cnt < npcj; cnt++)
+			pcj_copy[cnt] = pointcloud_[j][cnt];
+
+		if (corres_.size() < 10)
+			return -1;
+
+		std::vector<double> s(corres_.size(), 1.0);
+
+		Eigen::Matrix4f trans;
+		trans.setIdentity();
+
+		for (int itr = 0; itr < numIter; itr++) {
+
+			// graduated non-convexity.
+			// if (decrease_mu_)
+			// {
+			// 	if (itr % 4 == 0 && par > max_corr_dist_) {
+			// 		par /= div_factor_;
+			// 	}
+			// }
+
+			const int nvariable = 6;	// 3 for rotation and 3 for translation
+			Eigen::MatrixXd JTJ(nvariable, nvariable);
+			Eigen::MatrixXd JTr(nvariable, 1);
+			Eigen::MatrixXd J(nvariable, 1);
+			JTJ.setZero();
+			JTr.setZero();
+
+			double r;
+			double r2 = 0.0;
+
+			for (int c = 0; c < corres_.size(); c++) {
+				int ii = corres_[c].first;
+				int jj = corres_[c].second;
+				Eigen::Vector3f p, q;
+				p = pointcloud_[i][ii];
+				q = pcj_copy[jj];
+				Eigen::Vector3f rpq = p - q;
+
+				int c2 = c;
+				double res = rpq.norm();
+				
+				// weights of residuals derived using rho'(x)/x
+
+				s[c2] = robustcostWeight(res, c[maxcind], alpha[maxalphaind]);
+
+				J.setZero();
+				J(1) = -q(2);
+				J(2) = q(1);
+				J(3) = -1;
+				r = rpq(0);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				J.setZero();
+				J(2) = -q(0);
+				J(0) = q(2);
+				J(4) = -1;
+				r = rpq(1);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				J.setZero();
+				J(0) = -q(1);
+				J(1) = q(0);
+				J(5) = -1;
+				r = rpq(2);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
+			}
+
+			Eigen::MatrixXd result(nvariable, 1);
+			result = -JTJ.llt().solve(JTr);
+
+			Eigen::Affine3d aff_mat;
+			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
+				* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
+				* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
+			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
+
+			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
+
+			trans = delta * trans;
+			TransformPoints(pcj_copy, delta);
+
+		}
 
 	}
 
@@ -678,4 +738,16 @@ double CApp:robustcost(double r, double c, double alpha){
 	else {
     	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}
 
+}
+double CApp:robustcostWeight(double r, double c, double alpha){
+	double weight;
+	if (alpha == 2){
+    	weight = 1;}
+	else if (alpha == 0){
+    	weight = 2*c*c/(r*r + 2*c*c);}
+	else if (alpha == -Inf){
+    	weight = exp(-0.5*(r*r/c*c));}
+	else {
+    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
+	return weight/(c*c)
 }
