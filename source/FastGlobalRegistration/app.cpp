@@ -424,18 +424,34 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	int maxalphaind = 1;
 	int maxcind = 0;
 
+	double totallike;
+	std::vector<double> likevec;
+	std::vector<double> resnormvec;
+
+
+	Eigen::Matrix4f trans;
+	trans.setIdentity();
+	TransOutput_ = Eigen::Matrix4f::Identity();
+
 	int lenalpha = alpha.size();
 	int lenc = c.size();
 
 	// selecting the best alpha and c by maximizing respective negative log-likelihoods
+	int i = 0;
+	int j = 1;
+
+	// make another copy of pointcloud_[j].
+	Points pcj_copy;
+	int npcj = pointcloud_[j].size();
+	pcj_copy.resize(npcj);
+	for (int cnt = 0; cnt < npcj; cnt++)
+		pcj_copy[cnt] = pointcloud_[j][cnt];
 
 	for (int itr = 0; itr < ConvergIter; itr++){
-
-		std::vector<double> resnormvec;
-
-		for (int c = 0; c < corres_.size(); c++) {
-			int ii = corres_[c].first;
-			int jj = corres_[c].second;
+		resnormvec.clear();
+		for (int cr = 0; cr < corres_.size(); cr++) {
+			int ii = corres_[cr].first;
+			int jj = corres_[cr].second;
 			Eigen::Vector3f p, q;
 			p = pointcloud_[i][ii];
 			q = pcj_copy[jj];
@@ -445,13 +461,13 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 		}
 
 	    // firstly, keep c constant and maximize with respect to alpha
-		std::vector<double> likevec;
-		for(int i =0; i < lenalpha; i++){
-			double totallike = 0.0;
+		likevec.clear();
+		for(int ip =0; ip < lenalpha; ip++){
+			totallike = 0.0;
 			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[maxcind], alpha[i]))/constTable[i][cind];
+				totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
 			}
-			likevec.push_back(totallike)
+			likevec.push_back(totallike);
 		}
 
 	    std::vector<double>::iterator result;
@@ -460,54 +476,29 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	    maxalphaind = std::distance(likevec.begin(), result);
 
 		// secondly, keep alpha constant and maximize with respect to c
-		std::vector<double> likevec;
-		for(int j =0; j < lenc; j++){
+		likevec.clear();
+		for(int jq =0; jq < lenc; jq++){
 			totallike = 0.0;
 			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[j], alpha[maxalphaind]))/constTable[maxalphaind][j];
+				totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
 			}
-			likevec.push_back(totallike)
+			likevec.push_back(totallike);
 		}
 
-	    std::vector<double>::iterator result;
+	    std::vector<double>::iterator result2;
 
 	    result = std::max_element(likevec.begin(), likevec.end());
-	    maxcind = std::distance(likevec.begin(), result);
+	    maxcind = std::distance(likevec.begin(), result2);
 
 		// thirdly, do iteratively re-weighted least squares
-		double par;
 		int numIter = iteration_number_;
-		TransOutput_ = Eigen::Matrix4f::Identity();
-
-		par = StartScale;
-
-		int i = 0;
-		int j = 1;
-
-		// make another copy of pointcloud_[j].
-		Points pcj_copy;
-		int npcj = pointcloud_[j].size();
-		pcj_copy.resize(npcj);
-		for (int cnt = 0; cnt < npcj; cnt++)
-			pcj_copy[cnt] = pointcloud_[j][cnt];
-
 		if (corres_.size() < 10)
 			return -1;
 
 		std::vector<double> s(corres_.size(), 1.0);
 
-		Eigen::Matrix4f trans;
-		trans.setIdentity();
 
 		for (int itr = 0; itr < numIter; itr++) {
-
-			// graduated non-convexity.
-			// if (decrease_mu_)
-			// {
-			// 	if (itr % 4 == 0 && par > max_corr_dist_) {
-			// 		par /= div_factor_;
-			// 	}
-			// }
 
 			const int nvariable = 6;	// 3 for rotation and 3 for translation
 			Eigen::MatrixXd JTJ(nvariable, nvariable);
@@ -519,17 +510,17 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 			double r;
 			double r2 = 0.0;
 
-			for (int c = 0; c < corres_.size(); c++) {
-				int ii = corres_[c].first;
-				int jj = corres_[c].second;
+			for (int cr = 0; cr < corres_.size(); cr++) {
+				int ii = corres_[cr].first;
+				int jj = corres_[cr].second;
 				Eigen::Vector3f p, q;
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
 
-				int c2 = c;
+				int c2 = cr;
 				double res = rpq.norm();
-				
+
 				// weights of residuals derived using rho'(x)/x
 
 				s[c2] = robustcostWeight(res, c[maxcind], alpha[maxalphaind]);
@@ -583,7 +574,7 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	}
 
 	TransOutput_ = trans * TransOutput_;
-	return par;
+	// return par;
 }
 
 void CApp::TransformPoints(Points& points, const Eigen::Matrix4f& Trans)
@@ -728,26 +719,26 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	fclose(fid);
 }
 
-double CApp:robustcost(double r, double c, double alpha){
+double CApp::robustcost(double r, double c, double alpha){
 	if (alpha == 2){
     	return 0.5*pow(r/c,2);}
 	else if (alpha == 0){
     	return log(0.5*pow(r/c,2) + 1);}
-	else if (alpha == -Inf){
+	else if (alpha < -1000){
     	return 1 - exp(0.5*pow(r/c,2));}
 	else {
     	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}
 
 }
-double CApp:robustcostWeight(double r, double c, double alpha){
+double CApp::robustcostWeight(double r, double c, double alpha){
 	double weight;
 	if (alpha == 2){
     	weight = 1;}
 	else if (alpha == 0){
     	weight = 2*c*c/(r*r + 2*c*c);}
-	else if (alpha == -Inf){
+	else if (alpha < -1000){
     	weight = exp(-0.5*(r*r/c*c));}
 	else {
     	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
-	return weight/(c*c)
+	return weight/(c*c);
 }
