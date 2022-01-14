@@ -428,7 +428,6 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	std::vector<double> likevec;
 	std::vector<double> resnormvec;
 
-
 	Eigen::Matrix4f trans;
 	trans.setIdentity();
 	TransOutput_ = Eigen::Matrix4f::Identity();
@@ -447,6 +446,7 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 	for (int cnt = 0; cnt < npcj; cnt++)
 		pcj_copy[cnt] = pointcloud_[j][cnt];
 
+	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
 		resnormvec.clear();
 		for (int cr = 0; cr < corres_.size(); cr++) {
@@ -552,7 +552,7 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 				JTr += J * r * s[c2];
 				r2 += r * r * s[c2];
 
-				r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
+				// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
 			}
 
 			Eigen::MatrixXd result(nvariable, 1);
