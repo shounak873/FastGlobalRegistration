@@ -390,7 +390,7 @@ void CApp::NormalizePoints()
 	}
 }
 
-double CApp::OptimizePairwise(bool decrease_mu_)
+double CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 
@@ -400,13 +400,10 @@ double CApp::OptimizePairwise(bool decrease_mu_)
     std::vector<std::vector<double> > constTable;
     std::string line;
     double value2;
-
     int rowNum = 0;
-
 	int ConvergIter = 10;
 
-    // read in matrix
-
+    // read table into matrix
     while(std::getline(file2, line)) {
             std::vector<double> row;
             std::istringstream iss(line);
@@ -487,7 +484,7 @@ double CApp::OptimizePairwise(bool decrease_mu_)
 
 	    std::vector<double>::iterator result2;
 
-	    result = std::max_element(likevec.begin(), likevec.end());
+	    result2 = std::max_element(likevec.begin(), likevec.end());
 	    maxcind = std::distance(likevec.begin(), result2);
 
 		// thirdly, do iteratively re-weighted least squares
