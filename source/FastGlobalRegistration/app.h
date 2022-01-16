@@ -28,8 +28,6 @@
 // ----------------------------------------------------------------------------
 #include <vector>
 #include <flann/flann.hpp>
-#include <fstream>
-#include <iostream>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -69,10 +67,8 @@ public:
 	Eigen::Matrix4f ReadTrans(const char* filepath);
 	void WriteTrans(const char* filepath);
 	Eigen::Matrix4f GetOutputTrans();
-	double OptimizePairwise();
+	double OptimizePairwise(bool decrease_mu_);
 	void Evaluation(const char* gth, const char* estimation, const char *output);
-    double robustcost(double r, double c, double alpha);
-	double robustcostWeight(double r, double c, double alpha);
 
 private:
 	// containers

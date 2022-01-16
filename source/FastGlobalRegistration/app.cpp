@@ -28,7 +28,6 @@
 // ----------------------------------------------------------------------------
 
 #include "app.h"
-#include <math.h>
 
 using namespace Eigen;
 using namespace std;
@@ -390,49 +389,16 @@ void CApp::NormalizePoints()
 	}
 }
 
-double CApp::OptimizePairwise()
+double CApp::OptimizePairwise(bool decrease_mu_)
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	std::ifstream file2("table.txt");
-	//---------------------------------------------------------------------
-    // read the constant values from tzt file
-    std::vector<std::vector<double> > constTable;
-    std::string line;
-    double value2;
-    int rowNum = 0;
-	int ConvergIter = 10;
-
-    // read table into matrix
-    while(std::getline(file2, line)) {
-            std::vector<double> row;
-            std::istringstream iss(line);
-            while(iss >> value2){
-                    row.push_back(value2);
-            }
-            constTable.push_back(row);
-            rowNum = rowNum + 1;
-    }
-
-	//---------------------------------------------------------------------
-	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
-	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
-
-	int maxalphaind = 1;
-	int maxcind = 0;
-
-	double totallike;
-	std::vector<double> likevec;
-	std::vector<double> resnormvec;
-
-	Eigen::Matrix4f trans;
-	trans.setIdentity();
+	double par;
+	int numIter = iteration_number_;
 	TransOutput_ = Eigen::Matrix4f::Identity();
 
-	int lenalpha = alpha.size();
-	int lenc = c.size();
+	par = StartScale;
 
-	// selecting the best alpha and c by maximizing respective negative log-likelihoods
 	int i = 0;
 	int j = 1;
 
@@ -443,135 +409,95 @@ double CApp::OptimizePairwise()
 	for (int cnt = 0; cnt < npcj; cnt++)
 		pcj_copy[cnt] = pointcloud_[j][cnt];
 
-	// Main iteration cycle starts
-	for (int itr = 0; itr < ConvergIter; itr++){
-		resnormvec.clear();
-		for (int cr = 0; cr < corres_.size(); cr++) {
-			int ii = corres_[cr].first;
-			int jj = corres_[cr].second;
+	if (corres_.size() < 10)
+		return -1;
+
+	std::vector<double> s(corres_.size(), 1.0);
+
+	Eigen::Matrix4f trans;
+	trans.setIdentity();
+
+	for (int itr = 0; itr < numIter; itr++) {
+
+		// graduated non-convexity.
+		if (decrease_mu_)
+		{
+			if (itr % 4 == 0 && par > max_corr_dist_) {
+				par /= div_factor_;
+			}
+		}
+
+		const int nvariable = 6;	// 3 for rotation and 3 for translation
+		Eigen::MatrixXd JTJ(nvariable, nvariable);
+		Eigen::MatrixXd JTr(nvariable, 1);
+		Eigen::MatrixXd J(nvariable, 1);
+		JTJ.setZero();
+		JTr.setZero();
+
+		double r;
+		double r2 = 0.0;
+
+		for (int c = 0; c < corres_.size(); c++) {
+			int ii = corres_[c].first;
+			int jj = corres_[c].second;
 			Eigen::Vector3f p, q;
 			p = pointcloud_[i][ii];
 			q = pcj_copy[jj];
 			Eigen::Vector3f rpq = p - q;
-			double resnorm = rpq.norm();
-			resnormvec.push_back(resnorm);
+
+			int c2 = c;
+
+			float temp = par / (rpq.dot(rpq) + par);
+			s[c2] = temp * temp;
+
+			J.setZero();
+			J(1) = -q(2);
+			J(2) = q(1);
+			J(3) = -1;
+			r = rpq(0);
+			JTJ += J * J.transpose() * s[c2];
+			JTr += J * r * s[c2];
+			r2 += r * r * s[c2];
+
+			J.setZero();
+			J(2) = -q(0);
+			J(0) = q(2);
+			J(4) = -1;
+			r = rpq(1);
+			JTJ += J * J.transpose() * s[c2];
+			JTr += J * r * s[c2];
+			r2 += r * r * s[c2];
+
+			J.setZero();
+			J(0) = -q(1);
+			J(1) = q(0);
+			J(5) = -1;
+			r = rpq(2);
+			JTJ += J * J.transpose() * s[c2];
+			JTr += J * r * s[c2];
+			r2 += r * r * s[c2];
+
+			r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
 		}
 
-	    // firstly, keep c constant and maximize with respect to alpha
-		likevec.clear();
-		for(int ip =0; ip < lenalpha; ip++){
-			totallike = 0.0;
-			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
-			}
-			likevec.push_back(totallike);
-		}
+		Eigen::MatrixXd result(nvariable, 1);
+		result = -JTJ.llt().solve(JTr);
 
-	    std::vector<double>::iterator result;
+		Eigen::Affine3d aff_mat;
+		aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
+			* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
+			* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
+		aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
 
-	    result = std::max_element(likevec.begin(), likevec.end());
-	    maxalphaind = std::distance(likevec.begin(), result);
+		Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
 
-		// secondly, keep alpha constant and maximize with respect to c
-		likevec.clear();
-		for(int jq =0; jq < lenc; jq++){
-			totallike = 0.0;
-			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
-			}
-			likevec.push_back(totallike);
-		}
-
-	    std::vector<double>::iterator result2;
-
-	    result2 = std::max_element(likevec.begin(), likevec.end());
-	    maxcind = std::distance(likevec.begin(), result2);
-
-		// thirdly, do iteratively re-weighted least squares
-		int numIter = iteration_number_;
-		if (corres_.size() < 10)
-			return -1;
-
-		std::vector<double> s(corres_.size(), 1.0);
-
-
-		for (int itr = 0; itr < numIter; itr++) {
-
-			const int nvariable = 6;	// 3 for rotation and 3 for translation
-			Eigen::MatrixXd JTJ(nvariable, nvariable);
-			Eigen::MatrixXd JTr(nvariable, 1);
-			Eigen::MatrixXd J(nvariable, 1);
-			JTJ.setZero();
-			JTr.setZero();
-
-			double r;
-			double r2 = 0.0;
-
-			for (int cr = 0; cr < corres_.size(); cr++) {
-				int ii = corres_[cr].first;
-				int jj = corres_[cr].second;
-				Eigen::Vector3f p, q;
-				p = pointcloud_[i][ii];
-				q = pcj_copy[jj];
-				Eigen::Vector3f rpq = p - q;
-
-				int c2 = cr;
-				double res = rpq.norm();
-
-				// weights of residuals derived using rho'(x)/x
-
-				s[c2] = robustcostWeight(res, c[maxcind], alpha[maxalphaind]);
-
-				J.setZero();
-				J(1) = -q(2);
-				J(2) = q(1);
-				J(3) = -1;
-				r = rpq(0);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				J.setZero();
-				J(2) = -q(0);
-				J(0) = q(2);
-				J(4) = -1;
-				r = rpq(1);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				J.setZero();
-				J(0) = -q(1);
-				J(1) = q(0);
-				J(5) = -1;
-				r = rpq(2);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
-			}
-
-			Eigen::MatrixXd result(nvariable, 1);
-			result = -JTJ.llt().solve(JTr);
-
-			Eigen::Affine3d aff_mat;
-			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
-				* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
-				* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
-			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
-
-			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
-
-			trans = delta * trans;
-			TransformPoints(pcj_copy, delta);
-
-		}
+		trans = delta * trans;
+		TransformPoints(pcj_copy, delta);
 
 	}
 
 	TransOutput_ = trans * TransOutput_;
-	// return par;
+	return par;
 }
 
 void CApp::TransformPoints(Points& points, const Eigen::Matrix4f& Trans)
@@ -714,28 +640,4 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
-}
-
-double CApp::robustcost(double r, double c, double alpha){
-	if (alpha == 2){
-    	return 0.5*pow(r/c,2);}
-	else if (alpha == 0){
-    	return log(0.5*pow(r/c,2) + 1);}
-	else if (alpha < -1000){
-    	return 1 - exp(0.5*pow(r/c,2));}
-	else {
-    	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}
-
-}
-double CApp::robustcostWeight(double r, double c, double alpha){
-	double weight;
-	if (alpha == 2){
-    	weight = 1;}
-	else if (alpha == 0){
-    	weight = 2*c*c/(r*r + 2*c*c);}
-	else if (alpha < -1000){
-    	weight = exp(-0.5*(r*r/c*c));}
-	else {
-    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
-	return weight/(c*c);
 }
