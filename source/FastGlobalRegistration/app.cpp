@@ -571,6 +571,8 @@ double CApp::OptimizePairwise()
 	}
 
 	TransOutput_ = trans * TransOutput_;
+	std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+	std::cout << "Best c -- " << c[maxcind] << endl;
 	// return par;
 }
 
