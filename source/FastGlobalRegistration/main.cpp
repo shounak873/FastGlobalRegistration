@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "app.h"
 
+
 int main(int argc, char *argv[])
 {
 	if (argc != 4)
@@ -38,6 +39,29 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	fgr::CApp app;
+	// std::ifstream file2("table.txt");
+	// //---------------------------------------------------------------------
+	// // read the constant values from txt file
+	// std::vector<std::vector<double> > constTable;
+	// std::string line;
+	// double value2;
+	// int rowNum = 0;
+	// // read table into matrix
+	// while(std::getline(file2, line)) {
+	// 		std::vector<double> row;
+	// 		std::cout << "row size" << row.size() << std::endl;
+	// 		std::istringstream iss(line);
+	// 		while(iss >> value2){
+	// 				row.push_back(value2);
+	// 		}
+	// 		constTable.push_back(row);
+	// 		rowNum = rowNum + 1;
+	// }
+	// std::cout << "Row numbers - " << rowNum << std::endl;
+	// std::cout << "Col numbers - " << constTable[0].size() << std::endl;
+
+
+
 	app.ReadFeature(argv[1]);
 	app.ReadFeature(argv[2]);
 	app.NormalizePoints();

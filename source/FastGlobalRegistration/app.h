@@ -26,10 +26,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
-#include <vector>
+
 #include <flann/flann.hpp>
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <sstream>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -73,6 +78,7 @@ public:
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
+	
 
 private:
 	// containers

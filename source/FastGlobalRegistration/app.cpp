@@ -394,25 +394,26 @@ double CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	std::ifstream file2("table.txt");
-	//---------------------------------------------------------------------
-    // read the constant values from tzt file
-    std::vector<std::vector<double> > constTable;
-    std::string line;
-    double value2;
-    int rowNum = 0;
 	int ConvergIter = 10;
-
-    // read table into matrix
-    while(std::getline(file2, line)) {
-            std::vector<double> row;
-            std::istringstream iss(line);
-            while(iss >> value2){
-                    row.push_back(value2);
-            }
-            constTable.push_back(row);
-            rowNum = rowNum + 1;
-    }
+	std::vector<std::vector<double> > constTable
+	{
+		{2.1532028570864,3.22980428562961,4.30640571417281,5.38300714268667,6.45960802528936,7.53610810750998,8.61055560178086,9.67290939891834,10.7015604843851,11.6706811301333,12.5601762513577},
+		{2.506628274631,3.75994241184811,5.01325367514626,6.26617374642614,7.51343185531672,8.73569586966967,9.90199051707131,10.9835254472694,11.9628801332261,12.8346889702401,13.6022578686466},
+		{3.27207117349907,4.89874344658665,6.47728810211127,7.95594787883719,9.29991378445433,10.4966334925818,11.5490193893679,12.468153717608,13.2683920628234,13.9646102505334,14.5708363713487},
+		{4.04551805496956,5.77747122779093,7.32649473622823,8.70419751367103,9.92395391468877,11.0000910439092,11.9471672428665,12.7793937903547,13.5102171771208,14.1520531803416,14.7161486535605},
+		{4.96745892585857,6.52533751677886,7.91545826245617,9.15938421883531,10.2714173893148,11.263243363721,12.1455867539257,12.9287513285922,13.6226979172152,14.236947622386,14.7804475994678},
+		{5.73042017342736,7.0800882897128,8.32233833794882,9.4586669088462,10.4917363110439,11.4255220480285,12.2652547225842,13.0171884774101,13.6882680593405,14.285771956197,14.8169906132608},
+		{6.28595490438964,7.48042787512659,8.61135949440989,9.66771816460481,10.6432395963002,11.5355686000145,12.3454195597242,13.0758019093587,13.7313203050378,14.317565494531,14.8406135718975},
+		{6.68591450426162,7.77374116025242,8.82386357160023,9.82087439191604,10.7535022490091,11.6150594817247,12.4028981018181,13.1175393521926,13.7617862048566,14.3399388884498,14.8571548255402},
+		{6.98043396672199,7.9943445867788,8.9852340746002,9.93739611175074,10.8371943720543,11.6751409517833,12.446133701736,13.1487853336843,13.7844928580188,14.3565470079733,14.8693894273493},
+		{7.20371932294304,8.16477148530031,9.11126150946654,10.0287684337032,10.9028087085116,11.7221317369181,12.4798384946766,13.1730594225744,13.8020745789817,14.3693675199392,14.8788079797101},
+		{7.37775177266087,8.29968019595686,9.21206346586082,10.1022045692028,10.9555882755489,11.7598800604463,12.5068513679955,13.1924633317827,13.816092791121,14.3795651912009,14.8862835460625},
+		{7.51673034201447,8.40876821584645,9.29433649262429,10.1624371255234,10.9989383591594,11.7908626205475,12.5289852397304,13.2083303366063,13.8275323849128,14.3878710869848,14.8923617403929},
+		{7.63004699583029,8.49861028231802,9.36265221963475,10.2126879902167,11.0351635232013,11.8167450674265,12.5474523172431,13.2215473647268,13.8370455830464,14.3947674262386,14.8974012069763},
+		{7.72409071981756,8.57377999194787,9.42022080824143,10.2552206030357,11.0658773854497,11.8386885481509,12.5630939326712,13.2327274858709,13.8450815754291,14.4005852417159,14.9016474445137}
+	};
+	std::cout << "Row numbers - " << constTable.size() << std::endl;
+	std::cout << "Col numbers - " << constTable[0].size() << std::endl;
 
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
@@ -420,6 +421,9 @@ double CApp::OptimizePairwise()
 
 	int maxalphaind = 1;
 	int maxcind = 0;
+	std::cout << "Before optimization" << std::endl;
+	std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+	std::cout << "Best c -- " << c[maxcind] << endl;
 
 	double totallike;
 	std::vector<double> likevec;
@@ -454,6 +458,7 @@ double CApp::OptimizePairwise()
 			q = pcj_copy[jj];
 			Eigen::Vector3f rpq = p - q;
 			double resnorm = rpq.norm();
+			// std::cout << "Residual norm - " << resnorm << endl;
 			resnormvec.push_back(resnorm);
 		}
 
@@ -464,6 +469,7 @@ double CApp::OptimizePairwise()
 			for(auto it2 : resnormvec){
 				totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
 			}
+			std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
 			likevec.push_back(totallike);
 		}
 
@@ -471,6 +477,8 @@ double CApp::OptimizePairwise()
 
 	    result = std::max_element(likevec.begin(), likevec.end());
 	    maxalphaind = std::distance(likevec.begin(), result);
+		std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+		std::cout << " ------------------------ " << std::endl;
 
 		// secondly, keep alpha constant and maximize with respect to c
 		likevec.clear();
@@ -479,6 +487,7 @@ double CApp::OptimizePairwise()
 			for(auto it2 : resnormvec){
 				totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
 			}
+			std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
 			likevec.push_back(totallike);
 		}
 
@@ -486,6 +495,8 @@ double CApp::OptimizePairwise()
 
 	    result2 = std::max_element(likevec.begin(), likevec.end());
 	    maxcind = std::distance(likevec.begin(), result2);
+		std::cout << "Best c -- " << c[maxcind] << endl;
+		std::cout << " ------------------------ " << std::endl;
 
 		// thirdly, do iteratively re-weighted least squares
 		int numIter = iteration_number_;
@@ -554,6 +565,7 @@ double CApp::OptimizePairwise()
 
 			Eigen::MatrixXd result(nvariable, 1);
 			result = -JTJ.llt().solve(JTr);
+			//std::cout << "Result is " << result << std::endl;
 
 			Eigen::Affine3d aff_mat;
 			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
@@ -571,8 +583,8 @@ double CApp::OptimizePairwise()
 	}
 
 	TransOutput_ = trans * TransOutput_;
-	std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
-	std::cout << "Best c -- " << c[maxcind] << endl;
+	// std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+	// std::cout << "Best c -- " << c[maxcind] << endl;
 	// return par;
 }
 
