@@ -403,17 +403,8 @@ double CApp::OptimizePairwise()
     int rowNum = 0;
 	int ConvergIter = 10;
 
-    // read table into matrix
-    while(std::getline(file2, line)) {
-            std::vector<double> row;
-            std::istringstream iss(line);
-            while(iss >> value2){
-                    row.push_back(value2);
-            }
-            constTable.push_back(row);
-            rowNum = rowNum + 1;
-    }
 
+	std::vector<double> consts {2.1532,2.5066,3.2721,4.04552,4.9674,5.7304,6.2859,6.6859,6.9804,7.2037,7.3777,7.5167,7.6300,7.7241};
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
 	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
@@ -462,7 +453,7 @@ double CApp::OptimizePairwise()
 		for(int ip =0; ip < lenalpha; ip++){
 			totallike = 0.0;
 			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
+				totallike += exp(-robustcost(it2,1.0, alpha[ip]))/(c*consts[ip]);
 			}
 			likevec.push_back(totallike);
 		}
@@ -472,22 +463,7 @@ double CApp::OptimizePairwise()
 	    result = std::max_element(likevec.begin(), likevec.end());
 	    maxalphaind = std::distance(likevec.begin(), result);
 
-		// secondly, keep alpha constant and maximize with respect to c
-		likevec.clear();
-		for(int jq =0; jq < lenc; jq++){
-			totallike = 0.0;
-			for(auto it2 : resnormvec){
-				totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
-			}
-			likevec.push_back(totallike);
-		}
-
-	    std::vector<double>::iterator result2;
-
-	    result2 = std::max_element(likevec.begin(), likevec.end());
-	    maxcind = std::distance(likevec.begin(), result2);
-
-		// thirdly, do iteratively re-weighted least squares
+		// secondly, do iteratively re-weighted least squares
 		int numIter = iteration_number_;
 		if (corres_.size() < 10)
 			return -1;
@@ -520,7 +496,7 @@ double CApp::OptimizePairwise()
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, c[maxcind], alpha[maxalphaind]);
+				s[c2] = robustcostWeight(res, 1.0, alpha[maxalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
