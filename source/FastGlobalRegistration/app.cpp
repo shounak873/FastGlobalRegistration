@@ -390,11 +390,12 @@ void CApp::NormalizePoints()
 	}
 }
 
-double CApp::OptimizePairwise()
+void CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 
 	int ConvergIter = 10;
+	double tol = 1e-3;
 	std::vector<std::vector<double> > constTable
 	{
 		{2.1532, 3.2298, 4.3064, 5.3830, 6.4596, 7.5361, 8.6105, 9.6729, 10.7016, 11.6707, 12.5602},
@@ -424,12 +425,14 @@ double CApp::OptimizePairwise()
 	std::cout << "Before optimization" << std::endl;
 	std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
 	std::cout << "Best c -- " << c[maxcind] << endl;
+	std::cout << " ------------------------ " << std::endl;
 
 	double totallike;
 	std::vector<double> likevec;
 	std::vector<double> resnormvec;
 
 	Eigen::Matrix4f trans;
+	Eigen::Matrix4f pretrans;
 	trans.setIdentity();
 	TransOutput_ = Eigen::Matrix4f::Identity();
 
@@ -449,6 +452,8 @@ double CApp::OptimizePairwise()
 
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
+		std::cout << " ------------------------ " << std::endl;
+		std::cout << "Iteration number " << itr << std::endl;
 		resnormvec.clear();
 		for (int cr = 0; cr < corres_.size(); cr++) {
 			int ii = corres_[cr].first;
@@ -469,16 +474,16 @@ double CApp::OptimizePairwise()
 			for(auto it2 : resnormvec){
 				totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
 			}
-			std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
+			// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
 			likevec.push_back(totallike);
 		}
 
 	    std::vector<double>::iterator result;
-
+		// std::cout << "Like vec size " << likevec.size() << std::endl;
 	    result = std::max_element(likevec.begin(), likevec.end());
 	    maxalphaind = std::distance(likevec.begin(), result);
 		std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
-		std::cout << " ------------------------ " << std::endl;
+		// std::cout << " ------------------------ "  << std::endl;
 
 		// secondly, keep alpha constant and maximize with respect to c
 		likevec.clear();
@@ -487,7 +492,7 @@ double CApp::OptimizePairwise()
 			for(auto it2 : resnormvec){
 				totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
 			}
-			std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
+			// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
 			likevec.push_back(totallike);
 		}
 
@@ -496,12 +501,12 @@ double CApp::OptimizePairwise()
 	    result2 = std::max_element(likevec.begin(), likevec.end());
 	    maxcind = std::distance(likevec.begin(), result2);
 		std::cout << "Best c -- " << c[maxcind] << endl;
-		std::cout << " ------------------------ " << std::endl;
+		// std::cout << " ------------------------ "  << std::endl;
 
 		// thirdly, do iteratively re-weighted least squares
 		int numIter = iteration_number_;
 		if (corres_.size() < 10)
-			return -1;
+			return;
 
 		std::vector<double> s(corres_.size(), 1.0);
 
@@ -574,8 +579,15 @@ double CApp::OptimizePairwise()
 			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
 
 			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
-
+			pretrans = trans;
 			trans = delta * trans;
+			double diff = (pretrans - trans).norm();
+			std::cout << "Normed difference in trans -- " << diff << std::endl;
+			std::cout << " ------------------------ " << std::endl;
+			if (diff < tol){
+				break;
+			}
+
 			TransformPoints(pcj_copy, delta);
 
 		}
@@ -583,7 +595,7 @@ double CApp::OptimizePairwise()
 	}
 
 	TransOutput_ = trans * TransOutput_;
-	// std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+	std::cout << "End of all iterations " << std::endl;
 	// std::cout << "Best c -- " << c[maxcind] << endl;
 	// return par;
 }
@@ -731,11 +743,11 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 }
 
 double CApp::robustcost(double r, double c, double alpha){
-	if (alpha == 2){
+	if (alpha == 2.0){
     	return 0.5*pow(r/c,2);}
-	else if (alpha == 0){
+	else if (alpha == 0.0){
     	return log(0.5*pow(r/c,2) + 1);}
-	else if (alpha < -1000){
+	else if (alpha < -1000.0){
     	return 1 - exp(0.5*pow(r/c,2));}
 	else {
     	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}

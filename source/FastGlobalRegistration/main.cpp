@@ -39,8 +39,16 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	fgr::CApp app;
-	// std::ifstream file2("table.txt");
+	app.ReadFeature(argv[1]);
+	app.ReadFeature(argv[2]);
+	app.NormalizePoints();
+	app.AdvancedMatching();
+	app.OptimizePairwise();
+	app.WriteTrans(argv[3]);
+
+	return 0;
 	// //---------------------------------------------------------------------
+	// std::ifstream file2("table.txt");
 	// // read the constant values from txt file
 	// std::vector<std::vector<double> > constTable;
 	// std::string line;
@@ -59,15 +67,5 @@ int main(int argc, char *argv[])
 	// }
 	// std::cout << "Row numbers - " << rowNum << std::endl;
 	// std::cout << "Col numbers - " << constTable[0].size() << std::endl;
-
-
-
-	app.ReadFeature(argv[1]);
-	app.ReadFeature(argv[2]);
-	app.NormalizePoints();
-	app.AdvancedMatching();
-	app.OptimizePairwise();
-	app.WriteTrans(argv[3]);
-
-	return 0;
+	// //---------------------------------------------------------------------
 }

@@ -42,7 +42,7 @@
 #define DIV_FACTOR			1.4		// Division factor used for graduated non-convexity
 #define USE_ABSOLUTE_SCALE	0		// Measure distance in absolute scale (1) or in scale relative to the diameter of the model (0)
 #define MAX_CORR_DIST		0.025	// Maximum correspondence distance (also see comment of USE_ABSOLUTE_SCALE)
-#define ITERATION_NUMBER	32		// Maximum number of iteration
+#define ITERATION_NUMBER	10		// Maximum number of iteration
 #define TUPLE_SCALE			0.95	// Similarity measure used for tuples of feature points.
 #define TUPLE_MAX_CNT		1000	// Maximum tuple numbers.
 
@@ -74,11 +74,11 @@ public:
 	Eigen::Matrix4f ReadTrans(const char* filepath);
 	void WriteTrans(const char* filepath);
 	Eigen::Matrix4f GetOutputTrans();
-	double OptimizePairwise();
+	void OptimizePairwise();
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
-	
+
 
 private:
 	// containers
