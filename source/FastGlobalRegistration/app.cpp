@@ -390,7 +390,7 @@ void CApp::NormalizePoints()
 	}
 }
 
-double CApp::OptimizePairwise()
+void CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 
@@ -402,12 +402,14 @@ double CApp::OptimizePairwise()
     double value2;
     int rowNum = 0;
 	int ConvergIter = 10;
+	double tol = 1e-3;
 
 
 	std::vector<double> consts {2.1532, 2.5066, 3.2721, 4.04552, 4.9674, 5.7304, 6.2859, 6.6859, 6.9804, 7.2037, 7.3777, 7.5167, 7.6300, 7.7241};
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
-	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
+	// std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
+	double c = 1.0;
 
 	int maxalphaind = 1;
 	int maxcind = 0;
@@ -417,11 +419,11 @@ double CApp::OptimizePairwise()
 	std::vector<double> resnormvec;
 
 	Eigen::Matrix4f trans;
+	Eigen::Matrix4f pretrans;
 	trans.setIdentity();
 	TransOutput_ = Eigen::Matrix4f::Identity();
 
 	int lenalpha = alpha.size();
-	int lenc = c.size();
 
 	// selecting the best alpha and c by maximizing respective negative log-likelihoods
 	int i = 0;
@@ -455,6 +457,7 @@ double CApp::OptimizePairwise()
 			for(auto it2 : resnormvec){
 				totallike += exp(-robustcost(it2,1.0, alpha[ip]))/(c*consts[ip]);
 			}
+			std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
 			likevec.push_back(totallike);
 		}
 
@@ -462,11 +465,12 @@ double CApp::OptimizePairwise()
 
 	    result = std::max_element(likevec.begin(), likevec.end());
 	    maxalphaind = std::distance(likevec.begin(), result);
+		std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
 
 		// secondly, do iteratively re-weighted least squares
 		int numIter = iteration_number_;
 		if (corres_.size() < 10)
-			return -1;
+			return ;
 
 		std::vector<double> s(corres_.size(), 1.0);
 
@@ -496,7 +500,7 @@ double CApp::OptimizePairwise()
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, 1.0, alpha[maxalphaind]);
+				s[c2] = robustcostWeight(res, c, alpha[maxalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -539,7 +543,15 @@ double CApp::OptimizePairwise()
 
 			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
 
+			pretrans = trans;
 			trans = delta * trans;
+			double diff = (pretrans - trans).norm();
+			std::cout << "Normed difference in trans -- " << diff << std::endl;
+			std::cout << " ------------------------ " << std::endl;
+			if (diff < tol){
+				break;
+			}
+
 			TransformPoints(pcj_copy, delta);
 
 		}

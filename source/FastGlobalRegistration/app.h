@@ -69,7 +69,7 @@ public:
 	Eigen::Matrix4f ReadTrans(const char* filepath);
 	void WriteTrans(const char* filepath);
 	Eigen::Matrix4f GetOutputTrans();
-	double OptimizePairwise();
+	void OptimizePairwise();
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
