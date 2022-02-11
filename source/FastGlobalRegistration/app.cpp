@@ -399,7 +399,7 @@ void CApp::OptimizePairwise()
     std::string line;
     double value2;
     int rowNum = 0;
-	int ConvergIter = 10;
+	int ConvergIter = 20;
 	double tol = 1e-7;
 
 
