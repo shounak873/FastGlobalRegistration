@@ -402,7 +402,7 @@ void CApp::OptimizePairwise()
     double value2;
     int rowNum = 0;
 	int ConvergIter = 10;
-	double tol = 1e-3;
+	double tol = 1e-5;
 
 
 	std::vector<double> consts {2.1532, 2.5066, 3.2721, 4.04552, 4.9674, 5.7304, 6.2859, 6.6859, 6.9804, 7.2037, 7.3777, 7.5167, 7.6300, 7.7241};
