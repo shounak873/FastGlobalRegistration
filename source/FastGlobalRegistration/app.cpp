@@ -394,7 +394,7 @@ void CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	int ConvergIter = 10;
+	int ConvergIter = 20;
 	double tol = 1e-7;
 	std::vector<std::vector<double> > constTable
 	{
