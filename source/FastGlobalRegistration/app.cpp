@@ -453,10 +453,10 @@ void CApp::OptimizePairwise()
 
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
-		while(diff > tol){
+		if(diff > tol){
 			pretrans = trans;
 			std::cout << " ------------------------ " << std::endl;
-			std::cout << "Iteration number outer" << itr << std::endl;
+			std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
 				int ii = corres_[cr].first;
@@ -589,13 +589,14 @@ void CApp::OptimizePairwise()
 			diff = (pretrans - trans).norm();
 			std::cout << "Normed difference in trans -- " << diff << std::endl;
 			std::cout << " ------------------------ " << std::endl;
+		}
+		else{
+			break;
+		}
 
 	}
 
 	TransOutput_ = trans * TransOutput_;
-	std::cout << "End of all iterations " << std::endl;
-	// std::cout << "Best c -- " << c[maxcind] << endl;
-	// return par;
 }
 
 void CApp::TransformPoints(Points& points, const Eigen::Matrix4f& Trans)
