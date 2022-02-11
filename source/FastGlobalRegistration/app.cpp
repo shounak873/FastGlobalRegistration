@@ -419,7 +419,7 @@ void CApp::OptimizePairwise()
 	Eigen::Matrix4f trans;
 	Eigen::Matrix4f pretrans;
 	trans.setIdentity();
-	doubel diff = 1.0;
+	double diff = 1.0;
 	TransOutput_ = Eigen::Matrix4f::Identity();
 
 	int lenalpha = alpha.size();
