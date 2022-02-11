@@ -455,7 +455,6 @@ void CApp::OptimizePairwise()
 	for (int itr = 0; itr < ConvergIter; itr++){
 		if(diff > tol){
 			pretrans = trans;
-			std::cout << " ------------------------ " << std::endl;
 			std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
