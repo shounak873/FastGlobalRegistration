@@ -701,8 +701,8 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	std::vector<std::pair<int, int> > corres;
 	Eigen::Matrix4f gth_trans = ReadTrans(gth);
 	BuildDenseCorrespondence(gth_trans, corres);
-	printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
-			(int)corres.size());
+	// printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
+			// (int)corres.size());
 
 	int ncorres = corres.size();
 	float err_mean = 0.0f;
