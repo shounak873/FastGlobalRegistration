@@ -727,14 +727,14 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	}
 	err_mean /= ncorres; // this is MSE = mean(d^2)
 	err_mean = sqrt(err_mean); // this is RMSE = sqrt(MSE)
-	printf("mean error : %0.4e\n", err_mean);
+	// printf("mean error : %0.4e\n", err_mean);
 
 	//overlapping_ratio = (float)ncorres / min(
 	//		pointcloud_[fj].size(), pointcloud_[fj].size());
 	overlapping_ratio = (float)ncorres / pointcloud_[fj].size();
 
 	// write errors
-	FILE* fid = fopen(output, "w");
+	FILE* fid = fopen(output, "a");
 	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
