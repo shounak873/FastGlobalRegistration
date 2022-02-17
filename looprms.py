@@ -1,14 +1,32 @@
+#!/usr/bin/env python
 
-import os
 import subprocess
+import os
+import os.path
+import glob
+import shutil
 
 
-pathpkg = os.getcwd()
-dir1 = "build/FastGlobalRegistration"
-dir2 = "dataset"
+def remove_thing(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        os.remove(path)
 
-pathexec = os.path.join(pathpkg, dir1)
-pathdata = os.path.join(pathpkg, dir2)
+
+def empty_directory(path):
+    for i in glob.glob(os.path.join(path, '*')):
+        remove_thing(i)
+
+
+empty_directory('results/rko')
+
+# pathpkg = os.getcwd()
+# dir1 = "build/FastGlobalRegistration"
+# dir2 = "dataset"
+#
+# pathexec = os.path.join(pathpkg, dir1)
+# pathdata = os.path.join(pathpkg, dir2)
 
 for i in range(25):
     for j in range(10):
