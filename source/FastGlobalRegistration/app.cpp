@@ -468,7 +468,7 @@ void CApp::OptimizePairwise()
 		    result = std::max_element(likevec.begin(), likevec.end());
 		    maxalphaind = std::distance(likevec.begin(), result);
 			std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
-
+			bestalpha = alpha[maxalphaind];
 			// secondly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
@@ -699,7 +699,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 
 	// write errors
 	FILE* fid = fopen(output, "a");
-	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
+	fprintf(fid, "%d %d %d %e %e %e\n", fi, fj, bestalpha, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }
