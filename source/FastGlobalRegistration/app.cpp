@@ -737,7 +737,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 
 	// write errors
 	FILE* fid = fopen(output, "a");
-	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
+	fprintf(fid, "%d %d %d %d %e %e %e\n", fi, fj, bestalpha, bestc, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }
