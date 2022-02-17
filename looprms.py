@@ -3,12 +3,15 @@ import os
 import subprocess
 
 
-pathpkg = os.getcwd()
-dir1 = "build/FastGlobalRegistration"
-dir2 = "dataset"
+# pathpkg = os.getcwd()
+# dir1 = "build/FastGlobalRegistration"
+# dir2 = "dataset"
+#
+# pathexec = os.path.join(pathpkg, dir1)
+# pathdata = os.path.join(pathpkg, dir2)
 
-pathexec = os.path.join(pathpkg, dir1)
-pathdata = os.path.join(pathpkg, dir2)
+# delete existing files from that folder since we are appending
+# proc0 = subprocess.run(["rm", "results/Srko/*"])
 
 for i in range(25):
     for j in range(10):

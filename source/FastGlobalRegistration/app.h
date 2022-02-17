@@ -53,6 +53,7 @@ typedef std::vector<Eigen::VectorXf> Feature;
 typedef flann::Index<flann::L2<float> > KDTree;
 typedef std::vector<std::pair<int, int> > Correspondences;
 
+
 class CApp{
 public:
 	CApp(double div_factor         = DIV_FACTOR,
@@ -78,8 +79,8 @@ public:
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
-	int bestalpha;
-	int bestc;
+	double bestalpha = -3.0;
+	double bestc = 4.0;
 
 
 private:

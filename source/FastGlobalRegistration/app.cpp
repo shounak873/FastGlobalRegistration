@@ -30,6 +30,7 @@
 #include "app.h"
 #include <math.h>
 
+
 using namespace Eigen;
 using namespace std;
 using namespace fgr;
@@ -420,15 +421,18 @@ void CApp::OptimizePairwise()
 	std::vector<double> alpha{2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
 	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
 
-	int maxalphaind = 1;
-	int maxcind = 0;
+
+	int minalphaind = 0;
+	int mincind = 0;
 	std::cout << "Before optimization" << std::endl;
-	std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
-	std::cout << "Best c -- " << c[maxcind] << endl;
+	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
+	std::cout << "Best c -- " << c[mincind] << endl;
 	std::cout << " ------------------------ " << std::endl;
 
 	double totallike;
-	std::vector<double> likevec;
+	std::vector<double> likevecalpha(13, 0.0);
+	std::vector<double> likevecc(11, 0.0);
+
 	std::vector<double> resnormvec;
 
 	Eigen::Matrix4f trans;
@@ -470,41 +474,45 @@ void CApp::OptimizePairwise()
 			}
 
 		    // firstly, keep c constant and maximize with respect to alpha
-			likevec.clear();
+			// likevec.clear();
+			std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
 			for(int ip =0; ip < lenalpha; ip++){
 				totallike = 0.0;
 				for(auto it2 : resnormvec){
-					totallike += exp(-robustcost(it2,c[maxcind], alpha[ip]))/constTable[ip][maxcind];
+					totallike += -log(exp(-robustcost(it2,c[mincind], alpha[ip]))/constTable[ip][mincind]);
 				}
 				// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
-				likevec.push_back(totallike);
+				likevecalpha[ip] = totallike;
 			}
 
-		    std::vector<double>::iterator result;
+		    // std::vector<double>::iterator result;
 			// std::cout << "Like vec size " << likevec.size() << std::endl;
-		    result = std::max_element(likevec.begin(), likevec.end());
-		    maxalphaind = std::distance(likevec.begin(), result);
-			std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
-			bestalpha = alpha[maxalphaind];
+		    // result = std::max_element(likevec.begin(), likevec.end());
+		    // maxalphaind = std::distance(likevec.begin(), result);
+			minalphaind = std::min_element(likevecalpha.begin(),likevecalpha.end()) - likevecalpha.begin();
+			std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
+			bestalpha = alpha[minalphaind];
 			// std::cout << " ------------------------ "  << std::endl;
 
 			// secondly, keep alpha constant and maximize with respect to c
-			likevec.clear();
+			std::fill(likevecc.begin(), likevecc.end(), 0.0);
 			for(int jq =0; jq < lenc; jq++){
 				totallike = 0.0;
 				for(auto it2 : resnormvec){
-					totallike += exp(-robustcost(it2,c[jq], alpha[maxalphaind]))/constTable[maxalphaind][jq];
+					totallike += -log(exp(-robustcost(it2,c[jq], alpha[minalphaind]))/constTable[minalphaind][jq]);
 				}
 				// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
-				likevec.push_back(totallike);
+				likevecc[jq] = totallike;
 			}
 
-		    std::vector<double>::iterator result2;
+		    // std::vector<double>::iterator result2;
 
-		    result2 = std::max_element(likevec.begin(), likevec.end());
-		    maxcind = std::distance(likevec.begin(), result2);
-			std::cout << "Best c -- " << c[maxcind] << endl;
-			bestc = c[maxcind];
+		    // result2 = std::max_element(likevec.begin(), likevec.end());
+		    // maxcind = std::distance(likevec.begin(), result2);
+			mincind = std::min_element(likevecc.begin(),likevecc.end()) - likevecc.begin();
+			std::cout << "Best c -- " << c[mincind] << endl;
+			bestc = c[mincind];
+			std::cout << "Class attribute bestc " << bestc << endl;
 			// std::cout << " ------------------------ "  << std::endl;
 
 			// thirdly, do iteratively re-weighted least squares
@@ -540,7 +548,7 @@ void CApp::OptimizePairwise()
 
 					// weights of residuals derived using rho'(x)/x
 
-					s[c2] = robustcostWeight(res, c[maxcind], alpha[maxalphaind]);
+					s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
 
 					J.setZero();
 					J(1) = -q(2);
@@ -636,7 +644,9 @@ void CApp::WriteTrans(const char* filepath)
 	// Below line indicates how the transformation matrix aligns two point clouds
 	// e.g. T * pointcloud_[1] is aligned with pointcloud_[0].
 	// '2' indicates that there are two point cloud fragments.
-	fprintf(fid, "0 1 2\n");
+	int val = 0;
+
+	fprintf(fid, "%d %lf %lf\n", val, bestalpha, bestc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
@@ -652,9 +662,10 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 {
 	Eigen::Matrix4f temp;
 	temp.fill(0);
-	int temp0, temp1, temp2, cnt = 0;
+	int temp0, cnt = 0;
+	double alphaB, cB;
 	FILE* fid = fopen(filename, "r");
-	while (fscanf(fid, "%d %d %d", &temp0, &temp1, &temp2) == 3)
+	while (fscanf(fid, "%d %lf %lf", &temp0, &alphaB, &cB) == 3)
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -702,6 +713,14 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 
 	std::vector<std::pair<int, int> > corres;
 	Eigen::Matrix4f gth_trans = ReadTrans(gth);
+
+	int temp0;
+	double alphaB, cB;
+
+	FILE* fid0 = fopen(estimation, "r");
+	fscanf(fid0, "%d %lf %lf", &temp0, &alphaB, &cB);
+	fclose(fid0);
+
 	BuildDenseCorrespondence(gth_trans, corres);
 	// printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
 			// (int)corres.size());
@@ -736,8 +755,9 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	overlapping_ratio = (float)ncorres / pointcloud_[fj].size();
 
 	// write errors
+	// Remember to clear results folder after running looprms once !
 	FILE* fid = fopen(output, "a");
-	fprintf(fid, "%d %d %d %d %e %e %e\n", fi, fj, bestalpha, bestc, err_mean,
+	fprintf(fid, "%d %d %lf %lf %.6f %.4f %.4f\n", fi, fj, alphaB, cB, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }

@@ -42,13 +42,13 @@ if(WIN32)
 	endif(MSVC)
 elseif(CYGWIN)
 	message(STATUS "Compiling on Cygwin")
-	# enable c++11
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	# enable c++14
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 	add_definitions(-DCYGWIN)
 elseif(APPLE)
 	add_definitions(-DUNIX)
-	# enable c++11
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	# enable c++14
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 	# compile speed optimization for clang
 	add_definitions(-Os)
 	# disable OpenMP since it is not currently supported on OSX
@@ -57,8 +57,8 @@ elseif(UNIX)
 	add_definitions(-DUNIX)
 	add_compile_options(-Wno-deprecated-declarations)
 	add_compile_options(-Wno-unused-result)
-	# enable c++11
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	# enable c++14
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 endif(WIN32)
 
 add_subdirectory(FastGlobalRegistration)
