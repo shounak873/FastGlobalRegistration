@@ -485,6 +485,7 @@ void CApp::OptimizePairwise()
 		    result = std::max_element(likevec.begin(), likevec.end());
 		    maxalphaind = std::distance(likevec.begin(), result);
 			std::cout << "Best alpha -- " << alpha[maxalphaind] << endl;
+			bestalpha = alpha[maxalphaind];
 			// std::cout << " ------------------------ "  << std::endl;
 
 			// secondly, keep alpha constant and maximize with respect to c
@@ -503,6 +504,7 @@ void CApp::OptimizePairwise()
 		    result2 = std::max_element(likevec.begin(), likevec.end());
 		    maxcind = std::distance(likevec.begin(), result2);
 			std::cout << "Best c -- " << c[maxcind] << endl;
+			bestc = c[maxcind];
 			// std::cout << " ------------------------ "  << std::endl;
 
 			// thirdly, do iteratively re-weighted least squares
