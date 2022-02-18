@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import subprocess
 import os
@@ -17,11 +18,15 @@ def empty_directory(path):
     for i in glob.glob(os.path.join(path, '*')):
         remove_thing(i)
 
-# delete existing files from that folder since we are appending
 
+empty_directory('results/rko')
 
-empty_directory('results/Srko')
-
+# pathpkg = os.getcwd()
+# dir1 = "build/FastGlobalRegistration"
+# dir2 = "dataset"
+#
+# pathexec = os.path.join(pathpkg, dir1)
+# pathdata = os.path.join(pathpkg, dir2)
 
 for i in range(25):
     for j in range(10):
@@ -41,6 +46,6 @@ for i in range(25):
                                 str(i+1) + "_rot_05/gt.log",
                                 "dataset/pairwise_no_noise_" +
                                 str(i+1) + "_rot_05/output_" + str(j+1) + ".txt",
-                                "results/Srko/no_noise_eval_collection_" + str(i+1) + ".txt"])
-# proc.wait()
-# proc.kill()
+                                "results/rko/no_noise_eval_collection_" + str(i+1) + ".txt"])
+        # proc.wait()
+        # proc.kill()
