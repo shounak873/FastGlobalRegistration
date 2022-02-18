@@ -603,8 +603,8 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	std::vector<std::pair<int, int> > corres;
 	Eigen::Matrix4f gth_trans = ReadTrans(gth);
 	BuildDenseCorrespondence(gth_trans, corres);
-	printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
-			(int)corres.size());
+	// printf("Groundtruth correspondences [%d-%d] : %d\n", fi, fj,
+			// (int)corres.size());
 
 	int ncorres = corres.size();
 	float err_mean = 0.0f;
@@ -629,15 +629,15 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	}
 	err_mean /= ncorres; // this is MSE = mean(d^2)
 	err_mean = sqrt(err_mean); // this is RMSE = sqrt(MSE)
-	printf("mean error : %0.4e\n", err_mean);
+	// printf("mean error : %0.4e\n", err_mean);
 
 	//overlapping_ratio = (float)ncorres / min(
 	//		pointcloud_[fj].size(), pointcloud_[fj].size());
 	overlapping_ratio = (float)ncorres / pointcloud_[fj].size();
 
 	// write errors
-	FILE* fid = fopen(output, "w");
-	fprintf(fid, "%d %d %e %e %e\n", fi, fj, err_mean,
+	FILE* fid = fopen(output, "a");
+	fprintf(fid, "%d %d %.6f %.4f %.4f\n", fi, fj, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }
