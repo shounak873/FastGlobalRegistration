@@ -19,7 +19,7 @@ def empty_directory(path):
         remove_thing(i)
 
 
-empty_directory('/home/navlab-shounak/FastGlobalRegistration/results/Srko')
+empty_directory('results/Srko')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -30,22 +30,22 @@ empty_directory('/home/navlab-shounak/FastGlobalRegistration/results/Srko')
 
 for i in range(25):
     for j in range(10):
-        proc = subprocess.run(["/home/navlab-shounak/FastGlobalRegistration/build/FastGlobalRegistration/FastGlobalRegistration",
-                               "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" +
+        proc = subprocess.run(["build/FastGlobalRegistration/FastGlobalRegistration",
+                               "dataset/pairwise_no_noise_" +
                                str(i+1) + "_rot_05/features_0000.bin",
-                               "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" +
+                               "dataset/pairwise_no_noise_" +
                                str(i+1) + "_rot_05/features_0001.bin",
-                               "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" + str(i+1) + "_rot_05/output_" + str(j+1) + ".txt"])
+                               "dataset/pairwise_no_noise_" + str(i+1) + "_rot_05/output_" + str(j+1) + ".txt"])
 
-        proc2 = subprocess.run(["/home/navlab-shounak/FastGlobalRegistration/build/FastGlobalRegistration/Evaluation",
-                                "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" +
+        proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
+                                "dataset/pairwise_no_noise_" +
                                 str(i+1) + "_rot_05/features_0000.bin",
-                                "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" +
+                                "dataset/pairwise_no_noise_" +
                                 str(i+1) + "_rot_05/features_0001.bin",
-                                "/home/navlab-shounak/FastGlobalRegistration/dataset/pairwise_no_noise_" +
+                                "dataset/pairwise_no_noise_" +
                                 str(i+1) + "_rot_05/gt.log",
-                                "/home/navlab-shounak/FastGlobalRegistrationdataset/pairwise_no_noise_" +
+                                "dataset/pairwise_no_noise_" +
                                 str(i+1) + "_rot_05/output_" + str(j+1) + ".txt",
-                                "/home/navlab-shounak/FastGlobalRegistration/results/Srko/no_noise_eval_collection_" + str(i+1) + ".txt"])
+                                "results/Srko/no_noise_eval_collection_" + str(i+1) + ".txt"])
         # proc.wait()
         # proc.kill()
