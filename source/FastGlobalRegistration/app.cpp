@@ -422,7 +422,7 @@ void CApp::OptimizePairwise()
 	std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
 
 
-	int minalphaind = 0;
+	int minalphaind = 3;
 	int mincind = 5;
 	std::cout << "Before optimization" << std::endl;
 	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
