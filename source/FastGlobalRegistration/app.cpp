@@ -410,7 +410,7 @@ void CApp::OptimizePairwise()
 	double c = 1.0;
 	bestc = c;
 
-	int minalphaind = 0;
+	int minalphaind = 3;
 	int lenalpha = alpha.size();
 	// int maxcind = 0;
 
@@ -718,25 +718,25 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 }
 
 double CApp::robustcost(double r, double c, double alpha){
-	if (alpha == 2){
+	if (alpha == 2.0){
     	return 0.5*pow(r/c,2);}
-	else if (alpha == 0){
+	else if (alpha == 0.0){
     	return log(0.5*pow(r/c,2) + 1);}
-	else if (alpha < -1000){
-    	return 1 - exp(0.5*pow(r/c,2));}
+	else if (alpha < -1000.0){
+    	return 1 - exp(-0.5*pow(r/c,2));}
 	else {
-    	return (abs(alpha-2)/alpha)*pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2)-1);}
+    	return (abs(alpha-2)/alpha)*(pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2))-1);}
 
 }
 double CApp::robustcostWeight(double r, double c, double alpha){
 	double weight;
 	if (alpha == 2){
-    	weight = 1;}
+    	weight = 1/(c*c);}
 	else if (alpha == 0){
-    	weight = 2*c*c/(r*r + 2*c*c);}
+    	weight = 2/(r*r + 2*c*c);}
 	else if (alpha < -1000){
-    	weight = exp(-0.5*(r*r/c*c));}
+    	weight = exp(-0.5*(r*r/c*c))/(c*c);}
 	else {
-    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
+    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
 	return weight;
 }
