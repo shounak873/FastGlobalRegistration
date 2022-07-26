@@ -484,10 +484,9 @@ void CApp::OptimizePairwise()
 				likevecalpha[ip] = totallike;
 			}
 
-		    // std::vector<double>::iterator result;
-			// std::cout << "Like vec size " << likevec.size() << std::endl;
-		    // result = std::max_element(likevec.begin(), likevec.end());
-		    // maxalphaind = std::distance(likevec.begin(), result);
+			// auto smallest = std::min_element( likevecalpha.begin(), likevecalpha.end());
+	        // minalphaind = std::distance(likevecalpha.begin(), smallest);
+	        // bestalpha = alpha[minalphaind];
 			minalphaind = std::min_element(likevecalpha.begin(),likevecalpha.end()) - likevecalpha.begin();
 			std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
 			bestalpha = alpha[minalphaind];
@@ -504,10 +503,9 @@ void CApp::OptimizePairwise()
 				likevecc[jq] = totallike;
 			}
 
-		    // std::vector<double>::iterator result2;
-
-		    // result2 = std::max_element(likevec.begin(), likevec.end());
-		    // maxcind = std::distance(likevec.begin(), result2);
+			// auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
+        	// mincind = std::distance(likevecc.begin(), smallest2);
+        	// bestc = c[mincind];
 			mincind = std::min_element(likevecc.begin(),likevecc.end()) - likevecc.begin();
 			std::cout << "Best c -- " << c[mincind] << endl;
 			bestc = c[mincind];
@@ -774,13 +772,15 @@ double CApp::robustcost(double r, double c, double alpha){
 }
 double CApp::robustcostWeight(double r, double c, double alpha){
 	double weight;
-	if (alpha == 2){
-    	weight = 1/(c*c);}
-	else if (alpha == 0){
-    	weight = 2/(r*r + 2*c*c);}
-	else if (alpha < -1000){
-    	weight = exp(-0.5*(r*r/c*c))/(c*c);}
-	else {
-    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
-	return weight;
+	if(std::abs(r) <= 10){
+		if (alpha == 2){
+	    	weight = 1;}
+		else if (alpha == 0){
+	    	weight = 2*(c*c)/(r*r + 2*c*c);}
+		else if (alpha < -1000){
+	    	weight = exp(-0.5*(r*r/c*c));}
+		else {
+	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
+		return weight;
+	}
 }
