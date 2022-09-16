@@ -730,13 +730,15 @@ double CApp::robustcost(double r, double c, double alpha){
 }
 double CApp::robustcostWeight(double r, double c, double alpha){
 	double weight;
-	if (alpha == 2){
-    	weight = 1/(c*c);}
-	else if (alpha == 0){
-    	weight = 2/(r*r + 2*c*c);}
-	else if (alpha < -1000){
-    	weight = exp(-0.5*(r*r/c*c))/(c*c);}
-	else {
-    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
-	return weight;
+	if(std::abs(r) <= 10){
+		if (alpha == 2){
+	    	weight = 1;}
+		else if (alpha == 0){
+	    	weight = 2*(c*c)/(r*r + 2*c*c);}
+		else if (alpha < -1000){
+	    	weight = exp(-0.5*(r*r/c*c));}
+		else {
+	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
+		return weight;
+	}
 }
