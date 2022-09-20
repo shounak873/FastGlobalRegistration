@@ -30,21 +30,21 @@ empty_directory('results/FastReg')
 
 for i in range(25):
     proc = subprocess.run(["build/FastGlobalRegistration/FastGlobalRegistration",
-                           "dataset/pairwise_no_noise_" +
+                           "dataset/pairwise_noise_xyz_level_02_" +
                            str(i+1) + "_rot_05/features_0000.bin",
-                           "dataset/pairwise_no_noise_" +
+                           "dataset/pairwise_noise_xyz_level_02_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "dataset/pairwise_no_noise_" + str(i+1) + "_rot_05/output_" + ".txt"])
+                           "dataset/pairwise_noise_xyz_level_02_" + str(i+1) + "_rot_05/output_" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
-                            "dataset/pairwise_no_noise_" +
+                            "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/features_0000.bin",
-                            "dataset/pairwise_no_noise_" +
+                            "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/features_0001.bin",
-                            "dataset/pairwise_no_noise_" +
+                            "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "dataset/pairwise_no_noise_" +
+                            "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/output_" + ".txt",
-                            "results/FastReg/no_noise_eval_collection_" + str(i+1) + ".txt"])
+                            "results/FastReg/noisy_eval_collection_" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
