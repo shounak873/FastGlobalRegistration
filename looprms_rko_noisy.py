@@ -46,6 +46,6 @@ for i in range(25):
                             str(i+1) + "_rot_05/gt.log",
                             "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/output_" + ".txt",
-                            "results/rko/noise_xyz_level_02_eval_collection_" + str(i+1) + ".txt"])
+                            "results/rko/noisy_eval_collection_" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
