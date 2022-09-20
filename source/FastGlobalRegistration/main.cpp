@@ -28,6 +28,14 @@
 // ----------------------------------------------------------------------------
 #include <stdio.h>
 #include "app.h"
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <cstdlib>
+using namespace std;
 
 
 int main(int argc, char *argv[])
@@ -38,12 +46,35 @@ int main(int argc, char *argv[])
 		printf("%s [feature_01] [feature_02] [transform_output_txt]\n", argv[0]);
 		return 0;
 	}
+
+	string fname = "/home/navlab-shounak/FastGlobalRegistration/source/FastGlobalRegistration/table.txt";
+
+	vector<vector<double>> content;
+	vector<double> row;
+	string line, word;
+	fstream file (fname, ios::in);
+	if(file.is_open())
+	{
+		while(getline(file, line))
+		{
+			row.clear();
+			stringstream str(line);
+			while(getline(str, word, ' '))
+				row.push_back(stof(word));
+			content.push_back(row);
+		}
+	}
+	else{
+		cout<<"Could not open the file\n";
+	}
+	std::cout << " Finished reading " << std::endl;
+
 	fgr::CApp app;
 	app.ReadFeature(argv[1]);
 	app.ReadFeature(argv[2]);
 	app.NormalizePoints();
 	app.AdvancedMatching();
-	app.OptimizePairwise();
+	app.OptimizePairwise(content);
 	app.WriteTrans(argv[3]);
 
 	return 0;

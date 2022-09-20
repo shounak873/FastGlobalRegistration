@@ -75,12 +75,13 @@ public:
 	Eigen::Matrix4f ReadTrans(const char* filepath);
 	void WriteTrans(const char* filepath);
 	Eigen::Matrix4f GetOutputTrans();
-	void OptimizePairwise();
+	void OptimizePairwise(std::vector<std::vector<double>> content);
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
-	double bestalpha = -3.0;
-	double bestc = 4.0;
+	double constTable[25][9];
+	double bestalpha = 2.0;
+	double bestc = 1.0;
 
 
 private:
