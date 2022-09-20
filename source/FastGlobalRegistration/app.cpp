@@ -390,28 +390,30 @@ void CApp::NormalizePoints()
 	}
 }
 
-void CApp::OptimizePairwise()
+void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 {
 	printf("Pairwise rigid pose optimization\n");
 	//---------------------------------------------------------------------
     // read the constant values from tzt file
-    std::vector<std::vector<double> > constTable;
     std::string line;
     double value2;
     int rowNum = 0;
 	int ConvergIter = 20;
 	double tol = 1e-7;
 
-
-	std::vector<double> consts {2.5066, 3.2721, 4.04552, 4.9674, 5.7304, 6.2859, 6.6859, 6.9804, 7.2037, 7.3777, 7.5167, 7.6300, 7.7241};
+	for (int i = 0; i < 25; i++){
+        for (int j = 0; j < 9; j++){
+            constTable[i][j] = content[i][j];
+        }
+    }
+	std::cout << "Last constant read " << constTable[24][8] << std::endl;
 	//---------------------------------------------------------------------
-	std::vector<double> alpha{2.0, 1.0, 0.0, -1.0, -2.0, -3.0, -4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0};
-	// std::vector<double> c{1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0};
+	std::vector<double> alpha{2.0,1.75,1.5,1.25,1.0,0.75,0.5,0.25,0.0,-0.25,-0.5,-0.75,-1.0,-1.25,-1.50,-1.75,-2.0,-2.25,-2.50,-2.75,-3.0,-3.25,-3.5,-3.75,-4.0};
 	double c = 1.0;
 	bestc = c;
 
-	int minalphaind = 3;
-	int lenalpha = alpha.size();
+	int minalphaind = 0;
+	int lenalpha = 25;
 	// int maxcind = 0;
 
 	double totallike;
@@ -457,7 +459,7 @@ void CApp::OptimizePairwise()
 			for(int ip =0; ip < lenalpha; ip++){
 				totallike = 0.0;
 				for(auto it2 : resnormvec){
-					totallike += -log(exp(-robustcost(it2,1.0, alpha[ip]))/(c*consts[ip]));
+					totallike += -log(exp(-robustcost(it2,1.0, alpha[ip]))/(constTable[ip][0]));
 				}
 				// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
 				likevecalpha[ip] = totallike;
@@ -738,7 +740,7 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 		else if (alpha < -1000){
 	    	weight = exp(-0.5*(r*r/c*c));}
 		else {
-	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1))/(c*c);}
+	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
 		return weight;
 	}
 }
