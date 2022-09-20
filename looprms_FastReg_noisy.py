@@ -19,7 +19,7 @@ def empty_directory(path):
         remove_thing(i)
 
 
-empty_directory('results/FastReg')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/FastReg/noisy')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -45,6 +45,6 @@ for i in range(25):
                             str(i+1) + "_rot_05/gt.log",
                             "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/output_" + ".txt",
-                            "results/FastReg/noisy_eval_collection_" + str(i+1) + ".txt"])
+                            "/home/navlab-shounak/Desktop/RegResults/FastReg/noisy/noisy_eval_collection_" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
