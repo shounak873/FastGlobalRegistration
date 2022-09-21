@@ -447,7 +447,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
-		if(diff > tol){
+		// if(diff > tol){
 			pretrans = trans;
 			std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
@@ -465,43 +465,43 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 		    // firstly, keep c constant and maximize with respect to alpha
 			// likevec.clear();
-			std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
-			for(int ip =0; ip < lenalpha; ip++){
-				totallike = 0.0;
-				for(auto it2 : resnormvec){
-					totallike += -log(exp(-robustcost(it2,c[mincind], alpha[ip]))/constTable[ip][mincind]);
+			if(itr % 4 == 0){
+				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
+				for(int ip =0; ip < lenalpha; ip++){
+					totallike = 0.0;
+					for(auto it2 : resnormvec){
+						totallike += -log(exp(-robustcost(it2,c[mincind], alpha[ip]))/constTable[ip][mincind]);
+					}
+					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
+					likevecalpha[ip] = totallike;
 				}
-				// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
-				likevecalpha[ip] = totallike;
-			}
 
-			// auto smallest = std::min_element( likevecalpha.begin(), likevecalpha.end());
-	        // minalphaind = std::distance(likevecalpha.begin(), smallest);
-	        // bestalpha = alpha[minalphaind];
-			minalphaind = std::min_element(likevecalpha.begin(),likevecalpha.end()) - likevecalpha.begin();
-			std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
-			bestalpha = alpha[minalphaind];
-			// std::cout << " ------------------------ "  << std::endl;
+				auto smallest = std::min_element( likevecalpha.begin(), likevecalpha.end());
+		        minalphaind = std::distance(likevecalpha.begin(), smallest);
+		        bestalpha = alpha[minalphaind];
+				// minalphaind = std::min_element(likevecalpha.begin(),likevecalpha.end()) - likevecalpha.begin();
+				// std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
+				// bestalpha = alpha[minalphaind];
+				// std::cout << " ------------------------ "  << std::endl;
 
-			// secondly, keep alpha constant and maximize with respect to c
-			std::fill(likevecc.begin(), likevecc.end(), 0.0);
-			for(int jq =0; jq < lenc; jq++){
-				totallike = 0.0;
-				for(auto it2 : resnormvec){
-					totallike += -log(exp(-robustcost(it2,c[jq], alpha[minalphaind]))/constTable[minalphaind][jq]);
+				// secondly, keep alpha constant and maximize with respect to c
+				std::fill(likevecc.begin(), likevecc.end(), 0.0);
+				for(int jq =0; jq < lenc; jq++){
+					totallike = 0.0;
+					for(auto it2 : resnormvec){
+						totallike += -log(exp(-robustcost(it2,c[jq], alpha[minalphaind]))/constTable[minalphaind][jq]);
+					}
+					// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
+					likevecc[jq] = totallike;
 				}
-				// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
-				likevecc[jq] = totallike;
-			}
 
-			// auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
-        	// mincind = std::distance(likevecc.begin(), smallest2);
-        	// bestc = c[mincind];
-			mincind = std::min_element(likevecc.begin(),likevecc.end()) - likevecc.begin();
-			std::cout << "Best c -- " << c[mincind] << endl;
-			bestc = c[mincind];
-			std::cout << "Class attribute bestc " << bestc << endl;
-			// std::cout << " ------------------------ "  << std::endl;
+				auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
+	        	mincind = std::distance(likevecc.begin(), smallest2);
+	        	bestc = c[mincind];
+				// mincind = std::min_element(likevecc.begin(),likevecc.end()) - likevecc.begin();
+				// std::cout << "Best c -- " << c[mincind] << endl;
+				// bestc = c[mincind];
+			}
 
 			// thirdly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
@@ -511,85 +511,85 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 			std::vector<double> s(corres_.size(), 1.0);
 
 
-			for (int itr2 = 0; itr2 < numIter; itr2++) {
+			// for (int itr2 = 0; itr2 < numIter; itr2++) {
 
-				const int nvariable = 6;	// 3 for rotation and 3 for translation
-				Eigen::MatrixXd JTJ(nvariable, nvariable);
-				Eigen::MatrixXd JTr(nvariable, 1);
-				Eigen::MatrixXd J(nvariable, 1);
-				JTJ.setZero();
-				JTr.setZero();
+			const int nvariable = 6;	// 3 for rotation and 3 for translation
+			Eigen::MatrixXd JTJ(nvariable, nvariable);
+			Eigen::MatrixXd JTr(nvariable, 1);
+			Eigen::MatrixXd J(nvariable, 1);
+			JTJ.setZero();
+			JTr.setZero();
 
-				double r;
-				double r2 = 0.0;
+			double r;
+			double r2 = 0.0;
 
-				for (int cr = 0; cr < corres_.size(); cr++) {
-					int ii = corres_[cr].first;
-					int jj = corres_[cr].second;
-					Eigen::Vector3f p, q;
-					p = pointcloud_[i][ii];
-					q = pcj_copy[jj];
-					Eigen::Vector3f rpq = p - q;
+			for (int cr = 0; cr < corres_.size(); cr++) {
+				int ii = corres_[cr].first;
+				int jj = corres_[cr].second;
+				Eigen::Vector3f p, q;
+				p = pointcloud_[i][ii];
+				q = pcj_copy[jj];
+				Eigen::Vector3f rpq = p - q;
 
-					int c2 = cr;
-					double res = rpq.norm();
+				int c2 = cr;
+				double res = rpq.norm();
 
-					// weights of residuals derived using rho'(x)/x
+				// weights of residuals derived using rho'(x)/x
 
-					s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
+				s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
 
-					J.setZero();
-					J(1) = -q(2);
-					J(2) = q(1);
-					J(3) = -1;
-					r = rpq(0);
-					JTJ += J * J.transpose() * s[c2];
-					JTr += J * r * s[c2];
-					r2 += r * r * s[c2];
+				J.setZero();
+				J(1) = -q(2);
+				J(2) = q(1);
+				J(3) = -1;
+				r = rpq(0);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
 
-					J.setZero();
-					J(2) = -q(0);
-					J(0) = q(2);
-					J(4) = -1;
-					r = rpq(1);
-					JTJ += J * J.transpose() * s[c2];
-					JTr += J * r * s[c2];
-					r2 += r * r * s[c2];
+				J.setZero();
+				J(2) = -q(0);
+				J(0) = q(2);
+				J(4) = -1;
+				r = rpq(1);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
 
-					J.setZero();
-					J(0) = -q(1);
-					J(1) = q(0);
-					J(5) = -1;
-					r = rpq(2);
-					JTJ += J * J.transpose() * s[c2];
-					JTr += J * r * s[c2];
-					r2 += r * r * s[c2];
+				J.setZero();
+				J(0) = -q(1);
+				J(1) = q(0);
+				J(5) = -1;
+				r = rpq(2);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
 
-					// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
-				}
-
-				Eigen::MatrixXd result(nvariable, 1);
-				result = -JTJ.llt().solve(JTr);
-				//std::cout << "Result is " << result << std::endl;
-
-				Eigen::Affine3d aff_mat;
-				aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
-					* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
-					* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
-				aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
-
-				Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
-				trans = delta * trans;
-				TransformPoints(pcj_copy, delta);
+				// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
 			}
 
-			diff = (pretrans - trans).norm();
-			std::cout << "Normed difference in trans -- " << diff << std::endl;
-			std::cout << " ------------------------ " << std::endl;
-		}
-		else{
-			break;
-		}
+			Eigen::MatrixXd result(nvariable, 1);
+			result = -JTJ.llt().solve(JTr);
+			//std::cout << "Result is " << result << std::endl;
+
+			Eigen::Affine3d aff_mat;
+			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
+				* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
+				* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
+			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
+
+			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
+			trans = delta * trans;
+			TransformPoints(pcj_copy, delta);
+			// }
+
+		// 	diff = (pretrans - trans).norm();
+		// 	std::cout << "Normed difference in trans -- " << diff << std::endl;
+		// 	std::cout << " ------------------------ " << std::endl;
+		// }
+		// else{
+		// 	break;
+		// }
 
 	}
 
