@@ -390,7 +390,7 @@ void CApp::NormalizePoints()
 	}
 }
 
-void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
+void CApp::OptimizePairwise()
 {
 	printf("Pairwise rigid pose optimization\n");
 	//---------------------------------------------------------------------
@@ -400,25 +400,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
     int rowNum = 0;
 	int ConvergIter = 20;
 	double tol = 1e-7;
-
-	for (int i = 0; i < 25; i++){
-        for (int j = 0; j < 9; j++){
-            constTable[i][j] = content[i][j];
-        }
-    }
-	std::cout << "Last constant read " << constTable[24][8] << std::endl;
-	//---------------------------------------------------------------------
-	std::vector<double> alpha{2.0,1.75,1.5,1.25,1.0,0.75,0.5,0.25,0.0,-0.25,-0.5,-0.75,-1.0,-1.25,-1.50,-1.75,-2.0,-2.25,-2.50,-2.75,-3.0,-3.25,-3.5,-3.75,-4.0};
-	double c = 1.0;
-	bestc = c;
-
-	int minalphaind = 0;
-	int lenalpha = 25;
-	// int maxcind = 0;
-
-	double totallike;
-	std::vector<double> likevecalpha(lenalpha, 0.0);
-	std::vector<double> resnormvec;
 
 	Eigen::Matrix4f trans;
 	Eigen::Matrix4f pretrans;
@@ -440,38 +421,9 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
-			pretrans = trans;
+			// pretrans = trans;
 			std::cout << "Iteration number outer  -- " << itr << std::endl;
-			resnormvec.clear();
-			for (int cr = 0; cr < corres_.size(); cr++) {
-				int ii = corres_[cr].first;
-				int jj = corres_[cr].second;
-				Eigen::Vector3f p, q;
-				p = pointcloud_[i][ii];
-				q = pcj_copy[jj];
-				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm();
-				resnormvec.push_back(resnorm);
-			}
-
-		    // firstly, keep c constant and maximize with respect to alpha
-			if (itr % 4 == 0){
-				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
-				for(int ip =0; ip < lenalpha; ip++){
-					totallike = 0.0;
-					for(auto it2 : resnormvec){
-						totallike += -log(exp(-robustcost(it2,1.0, alpha[ip]))/(constTable[ip][0]));
-					}
-					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
-					likevecalpha[ip] = totallike;
-				}
-
-			    auto smallest = std::min_element(likevecalpha.begin(), likevecalpha.end());
-			    minalphaind = std::distance(likevecalpha.begin(), smallest);
-				std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
-				bestalpha = alpha[minalphaind];
-			}
-			// secondly, do iteratively re-weighted least squares
+			// do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
 				return ;
@@ -504,7 +456,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, c, alpha[minalphaind]);
+				s[c2] = hubercostWeight(res, c);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -602,7 +554,7 @@ void CApp::WriteTrans(const char* filepath)
 	// '2' indicates that there are two point cloud fragments.
 	int val = 0;
 
-	fprintf(fid, "%d %lf %lf\n", val, bestalpha, bestc);
+	fprintf(fid, "0 1 2\n");
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
@@ -718,28 +670,11 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	fclose(fid);
 }
 
-double CApp::robustcost(double r, double c, double alpha){
-	if (alpha == 2.0){
-    	return 0.5*pow(r/c,2);}
-	else if (alpha == 0.0){
-    	return log(0.5*pow(r/c,2) + 1);}
-	else if (alpha < -1000.0){
-    	return 1 - exp(-0.5*pow(r/c,2));}
-	else {
-    	return (abs(alpha-2)/alpha)*(pow(r*r/(c*c*abs(alpha-2)) + 1,(alpha/2))-1);}
-
-}
-double CApp::robustcostWeight(double r, double c, double alpha){
-	double weight;
-	if(std::abs(r) <= 10){
-		if (alpha == 2){
-	    	weight = 1;}
-		else if (alpha == 0){
-	    	weight = 2*(c*c)/(r*r + 2*c*c);}
-		else if (alpha < -1000){
-	    	weight = exp(-0.5*(r*r/c*c));}
-		else {
-	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
-		return weight;
+double CApp::hubercostWeight(double r, double c){
+	if(std::abs(r) <= c){
+		return 1;
+	}
+	else{
+		return std::abs(c/r);
 	}
 }
