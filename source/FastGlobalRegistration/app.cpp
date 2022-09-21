@@ -468,8 +468,8 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 			    // std::vector<double>::iterator result;
 				//
-			    result = std::min_element(likevec.begin(), likevec.end());
-			    minalphaind = std::distance(likevec.begin(), result);
+			    smallest = std::min_element(likevec.begin(), likevec.end());
+			    minalphaind = std::distance(likevec.begin(), smallest);
 				std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
 				bestalpha = alpha[minalphaind];
 			}
