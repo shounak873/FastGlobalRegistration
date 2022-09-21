@@ -395,7 +395,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	int ConvergIter = 20;
+	int ConvergIter = 32;
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
