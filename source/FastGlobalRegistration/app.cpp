@@ -398,7 +398,7 @@ void CApp::OptimizePairwise()
     std::string line;
     double value2;
     int rowNum = 0;
-	int ConvergIter = 20;
+	int ConvergIter = 32;
 	double tol = 1e-7;
 
 	Eigen::Matrix4f trans;
