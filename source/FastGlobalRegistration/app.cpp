@@ -400,6 +400,7 @@ void CApp::OptimizePairwise()
     int rowNum = 0;
 	int ConvergIter = 32;
 	double tol = 1e-7;
+	double c = 1.3;
 
 	Eigen::Matrix4f trans;
 	Eigen::Matrix4f pretrans;
