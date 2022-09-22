@@ -571,10 +571,9 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 {
 	Eigen::Matrix4f temp;
 	temp.fill(0);
-	int temp0, cnt = 0;
-	double alphaB, cB;
+	int temp0, temp1, temp2, cnt = 0;
 	FILE* fid = fopen(filename, "r");
-	while (fscanf(fid, "%d %lf %lf", &temp0, &alphaB, &cB) == 3)
+	while (fscanf(fid, "%d %d %d", &temp0, &temp1, &temp2) == 3)
 	{
 		for (int j = 0; j < 4; j++)
 		{
