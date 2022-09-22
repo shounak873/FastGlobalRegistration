@@ -20,6 +20,7 @@ def empty_directory(path):
 
 
 empty_directory('/home/navlab-shounak/Desktop/RegResults/Huber/noisy')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/Huber/noisy_output')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -35,7 +36,7 @@ for i in range(25):
                            str(i+1) + "_rot_05/features_0000.bin",
                            "dataset/pairwise_noise_xyz_level_02_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "dataset/pairwise_noise_xyz_level_02_" + str(i+1) + "_rot_05/output_" + ".txt"])
+                           "/home/navlab-shounak/Desktop/RegResults/Huber/noisy_output/" + str(i+1) + "_rot_05_output" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
                             "dataset/pairwise_noise_xyz_level_02_" +
@@ -44,8 +45,8 @@ for i in range(25):
                             str(i+1) + "_rot_05/features_0001.bin",
                             "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "dataset/pairwise_noise_xyz_level_02_" +
-                            str(i+1) + "_rot_05/output_" + ".txt",
+                            "/home/navlab-shounak/Desktop/RegResults/Huber/noisy_output/" +
+                            str(i+1) + "_rot_05_output" + ".txt",
                             "/home/navlab-shounak/Desktop/RegResults/Huber/noisy/noisy_eval_collection_" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
