@@ -20,6 +20,7 @@ def empty_directory(path):
 
 
 empty_directory('/home/navlab-shounak/Desktop/RegResults/FastReg/clean')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/FastReg/clean_output')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -34,7 +35,7 @@ for i in range(25):
                            str(i+1) + "_rot_05/features_0000.bin",
                            "dataset/pairwise_no_noise_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "dataset/pairwise_no_noise_" + str(i+1) + "_rot_05/output_" + ".txt"])
+                           "/home/navlab-shounak/Desktop/RegResults/FastReg/clean_output/" + str(i+1) + "_rot_05_output" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
                             "dataset/pairwise_no_noise_" +
@@ -43,8 +44,8 @@ for i in range(25):
                             str(i+1) + "_rot_05/features_0001.bin",
                             "dataset/pairwise_no_noise_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "dataset/pairwise_no_noise_" +
-                            str(i+1) + "_rot_05/output_" + ".txt",
+                            "/home/navlab-shounak/Desktop/RegResults/FastReg/clean_output/" +
+                            str(i+1) + "_rot_05_output" + ".txt",
                             "/home/navlab-shounak/Desktop/RegResults/FastReg/clean/no_noise_eval_collection_" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
