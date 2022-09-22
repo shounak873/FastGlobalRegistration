@@ -772,6 +772,20 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 	    	weight = exp(-0.5*(r*r/c*c));}
 		else {
 	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
+
+		double huberweight = hubercostWeight(r,c);
+		if (huberweight < weight){
+			weight = huberweight;
+		}
 		return weight;
+	}
+}
+
+double CApp::hubercostWeight(double r, double c){
+	if(std::abs(r) <= c){
+		return 1;
+	}
+	else{
+		return std::abs(c/r);
 	}
 }

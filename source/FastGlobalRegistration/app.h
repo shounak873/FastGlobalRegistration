@@ -79,6 +79,7 @@ public:
 	void Evaluation(const char* gth, const char* estimation, const char *output);
     double robustcost(double r, double c, double alpha);
 	double robustcostWeight(double r, double c, double alpha);
+	double hubercostWeight(double r, double c);
 	double constTable[25][9];
 	double bestalpha = 2.0;
 	double bestc = 1.0;
