@@ -401,8 +401,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int i = 0; i < 25; i++){
         for (int j = 0; j < 9; j++){
             constTable[i][j] = content[i][j];
+			// std::cout << "Constant value " <<  constTable[i][j] << std::endl;
         }
     }
+
 
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{2.0, 1.75, 1.50, 1.25, 1.0, 0.75, 0.50, 0.25, 0.0, -0.25, -0.50, -0.75,
@@ -414,10 +416,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	int minalphaind = 0;
 	int mincind = 0;
-	std::cout << "Before optimization" << std::endl;
-	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
-	std::cout << "Best c -- " << c[mincind] << endl;
-	std::cout << " ------------------------ " << std::endl;
+	// std::cout << "Before optimization" << std::endl;
+
+
+	double gscale = 0.05;
 
 	double totallike;
 	std::vector<double> likevecalpha(25, 0.0);
@@ -458,10 +460,15 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm();
+				double resnorm = rpq.norm()/gscale;
 				// std::cout << "Residual norm - " << resnorm << endl;
 				resnormvec.push_back(resnorm);
 			}
+
+			// if  (itr == 28){
+				std::cout << "Starting alpha and c " << std::endl;
+				std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+			// }
 
 		    // firstly, keep c constant and maximize with respect to alpha
 			// likevec.clear();
@@ -470,7 +477,9 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				for(int ip =0; ip < lenalpha; ip++){
 					totallike = 0.0;
 					for(auto it2 : resnormvec){
-						totallike += -log(exp(-robustcost(it2,c[mincind], alpha[ip]))/constTable[ip][mincind]);
+						if (it2 <= 10){
+							totallike = totallike + robustcost(it2,c[mincind], alpha[ip]) + log(constTable[ip][mincind]);
+						}
 					}
 					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
 					likevecalpha[ip] = totallike;
@@ -489,7 +498,9 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				for(int jq =0; jq < lenc; jq++){
 					totallike = 0.0;
 					for(auto it2 : resnormvec){
-						totallike += -log(exp(-robustcost(it2,c[jq], alpha[minalphaind]))/constTable[minalphaind][jq]);
+						if (it2 <= 10){
+							totallike = totallike + robustcost(it2,c[jq], alpha[minalphaind]) + log(constTable[minalphaind][jq]);
+						}
 					}
 					// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
 					likevecc[jq] = totallike;
@@ -503,6 +514,32 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				// bestc = c[mincind];
 			}
 
+			if  (itr == 28){
+				std::cout << "alpha likelihood" << std::endl;
+				for (int i = 0; i < likevecalpha.size(); i++){
+					std::cout << likevecalpha[i] << " , ";
+				}
+				std::cout << " --------" << std::endl;
+				std::cout << "c likelihood" << std::endl;
+				for (int i = 0; i < likevecc.size(); i++){
+					std::cout << likevecc[i] << " , ";;
+				}
+				std::cout << " --------" << std::endl;
+				fstream file;
+	            std::string path = "/home/navlab-shounak/Desktop/resnormvec.txt";
+	            file.open(path,ios_base::out);
+
+	            for(int i=0;i<resnormvec.size();i++)
+	            {
+					if(i ==0){
+						file << bestalpha <<std::endl;
+						file << bestc << std::endl;
+					}
+	                file<<resnormvec[i]<<endl;
+	            }
+
+	            file.close();
+			}
 			// thirdly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
@@ -592,6 +629,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 		// }
 
 	}
+
+	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
+	std::cout << "Best c -- " << c[mincind] << endl;
+	std::cout << " ------------------------ " << std::endl;
 
 	TransOutput_ = trans * TransOutput_;
 }
@@ -773,11 +814,14 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 		else {
 	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
 
-		double huberweight = hubercostWeight(r,c);
-		if (huberweight < weight){
-			weight = huberweight;
-		}
+		// double huberweight = hubercostWeight(r,c);
+		// if (huberweight < weight){
+		// 	weight = huberweight;
+		// }
 		return weight;
+	}
+	else{
+		return 0.00000001;
 	}
 }
 

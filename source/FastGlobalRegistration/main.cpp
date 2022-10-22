@@ -77,26 +77,11 @@ int main(int argc, char *argv[])
 	app.OptimizePairwise(content);
 	app.WriteTrans(argv[3]);
 
-	return 0;
-	// //---------------------------------------------------------------------
-	// std::ifstream file2("table.txt");
-	// // read the constant values from txt file
-	// std::vector<std::vector<double> > constTable;
-	// std::string line;
-	// double value2;
-	// int rowNum = 0;
-	// // read table into matrix
-	// while(std::getline(file2, line)) {
-	// 		std::vector<double> row;
-	// 		std::cout << "row size" << row.size() << std::endl;
-	// 		std::istringstream iss(line);
-	// 		while(iss >> value2){
-	// 				row.push_back(value2);
-	// 		}
-	// 		constTable.push_back(row);
-	// 		rowNum = rowNum + 1;
+
+	// vector<double> resvec{0.0001, 0.02, 0.3, 0.05};
+	// for(auto it : resvec){
+	// 	std::cout << app.robustcost(it, 1.0, 1.75) << std::endl;
 	// }
-	// std::cout << "Row numbers - " << rowNum << std::endl;
-	// std::cout << "Col numbers - " << constTable[0].size() << std::endl;
-	// //---------------------------------------------------------------------
+
+	return 0;
 }
