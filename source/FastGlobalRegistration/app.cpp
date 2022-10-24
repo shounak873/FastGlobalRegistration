@@ -678,3 +678,26 @@ double CApp::hubercostWeight(double r, double c){
 		return std::abs(c/r);
 	}
 }
+
+void CApp::NormalizeRes(std::vector<double>& resnormvec){
+
+	double mean = 0.0;
+	double sdev = 0.0;
+	int num = resnormvec.size();
+	for(auto it : resnormvec){
+		mean += it;
+	}
+
+	mean = mean/num;
+
+	for(auto it : resnormvec){
+		sdev += (it - mean)*(it - mean);
+	}
+	sdev = pow(sdev/num,0.5);
+
+	for(int i; i < num; i++){
+		resnormvec[i] = (resnormvec[i] - mean)/sdev;
+	}
+
+
+}

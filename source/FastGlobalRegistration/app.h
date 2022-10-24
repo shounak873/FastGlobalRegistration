@@ -72,6 +72,7 @@ public:
 	void OptimizePairwise();
 	void Evaluation(const char* gth, const char* estimation, const char *output);
 	double hubercostWeight(double r, double c);
+	void NormalizeRes(std::vector<double>& resnormvec);
 
 private:
 	// containers
