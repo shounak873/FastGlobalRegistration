@@ -29,7 +29,7 @@ empty_directory('/home/navlab-shounak/Desktop/RegResults/RKO/noisy_output')
 # pathexec = os.path.join(pathpkg, dir1)
 # pathdata = os.path.join(pathpkg, dir2)
 
-for i in range(25):
+for i in range(1):
     # for j in range(10):
     proc = subprocess.run(["build/FastGlobalRegistration/FastGlobalRegistration",
                            "dataset/pairwise_noise_xyz_level_02_" +

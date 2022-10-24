@@ -404,9 +404,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int i = 0; i < 25; i++){
         for (int j = 0; j < 9; j++){
             constTable[i][j] = content[i][j];
+			std::cout << " constant read " << constTable[i][j] << std::endl;
         }
     }
-	std::cout << "Last constant read " << constTable[24][8] << std::endl;
+
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{2.0,1.75,1.5,1.25,1.0,0.75,0.5,0.25,0.0,-0.25,-0.5,-0.75,-1.0,-1.25,-1.50,-1.75,-2.0,-2.25,-2.50,-2.75,-3.0,-3.25,-3.5,-3.75,-4.0};
 	double c = 1.0;
@@ -454,13 +455,17 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				resnormvec.push_back(resnorm);
 			}
 
+			NormalizeRes(resnormvec);
+
 		    // firstly, keep c constant and maximize with respect to alpha
 			if (itr % 4 == 0){
 				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
 				for(int ip =0; ip < lenalpha; ip++){
 					totallike = 0.0;
 					for(auto it2 : resnormvec){
-						totallike += -log(exp(-robustcost(it2,1.0, alpha[ip]))/(constTable[ip][0]));
+						if(abs(it2) <= 10){
+							totallike += robustcost(it2,1.0, alpha[ip]) + log(constTable[ip][0]);
+						}
 					}
 					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
 					likevecalpha[ip] = totallike;
@@ -742,4 +747,30 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
 		return weight;
 	}
+	else{
+		return 0.0000001;
+	}
+}
+
+void CApp::NormalizeRes(std::vector<double>& resnormvec){
+
+	double mean = 0.0;
+	double sdev = 0.0;
+	int num = resnormvec.size();
+	for(auto it : resnormvec){
+		mean += it;
+	}
+
+	mean = mean/num;
+
+	for(auto it : resnormvec){
+		sdev += (it - mean)*(it - mean);
+	}
+	sdev = pow(sdev/mean,0.5);
+
+	for(int i; i < num; i++){
+		resnormvec[i] = (resnormvec[i] - mean)/sdev;
+	}
+
+
 }
