@@ -766,7 +766,7 @@ void CApp::NormalizeRes(std::vector<double>& resnormvec){
 	for(auto it : resnormvec){
 		sdev += (it - mean)*(it - mean);
 	}
-	sdev = pow(sdev/mean,0.5);
+	sdev = pow(sdev/num,0.5);
 
 	for(int i; i < num; i++){
 		resnormvec[i] = (resnormvec[i] - mean)/sdev;
