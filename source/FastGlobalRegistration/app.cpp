@@ -419,7 +419,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// std::cout << "Before optimization" << std::endl;
 
 
-	double gscale = 0.05;
+	double gscale = 0.02;
 
 	double totallike;
 	std::vector<double> likevecalpha(25, 0.0);
@@ -466,12 +466,13 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 			}
 
 			// if  (itr == 28){
-				std::cout << "Starting alpha and c " << std::endl;
-				std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+			std::cout << "Starting alpha and c " << std::endl;
+			std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+
+			// NormalizeRes(resnormvec);
 			// }
 
 		    // firstly, keep c constant and maximize with respect to alpha
-			// likevec.clear();
 			if(itr % 4 == 0){
 				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
 				for(int ip =0; ip < lenalpha; ip++){
@@ -488,10 +489,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				auto smallest = std::min_element( likevecalpha.begin(), likevecalpha.end());
 		        minalphaind = std::distance(likevecalpha.begin(), smallest);
 		        bestalpha = alpha[minalphaind];
-				// minalphaind = std::min_element(likevecalpha.begin(),likevecalpha.end()) - likevecalpha.begin();
-				// std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
-				// bestalpha = alpha[minalphaind];
-				// std::cout << " ------------------------ "  << std::endl;
 
 				// secondly, keep alpha constant and maximize with respect to c
 				std::fill(likevecc.begin(), likevecc.end(), 0.0);
@@ -509,9 +506,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
 	        	mincind = std::distance(likevecc.begin(), smallest2);
 	        	bestc = c[mincind];
-				// mincind = std::min_element(likevecc.begin(),likevecc.end()) - likevecc.begin();
-				// std::cout << "Best c -- " << c[mincind] << endl;
-				// bestc = c[mincind];
 			}
 
 			if  (itr == 28){
@@ -573,7 +567,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
+				s[c2] = robustcostWeight(res/gscale, c[mincind], alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -832,4 +826,41 @@ double CApp::hubercostWeight(double r, double c){
 	else{
 		return std::abs(c/r);
 	}
+}
+
+void CApp::NormalizeRes(std::vector<double>& resnormvec){
+
+	// double mean = 0.0;
+	// double sdev = 0.0;
+	// int num = resnormvec.size();
+	// for(auto it : resnormvec){
+	// 	mean += it;
+	// }
+	//
+	// mean = mean/num;
+	//
+	// for(auto it : resnormvec){
+	// 	sdev += (it - mean)*(it - mean);
+	// }
+	// sdev = pow(sdev/num,0.5);
+
+	double median;
+
+	int size = resnormvec.size();
+
+	sort(resnormvec.begin(), resnormvec.end());
+	if (size % 2 == 0)
+	{
+	   median = (resnormvec[size / 2 - 1] + resnormvec[size / 2]) / 2;
+	}
+    else
+    {
+      median = resnormvec[size / 2];
+    }
+
+	for(int i; i < size; i++){
+		resnormvec[i] = (resnormvec[i] - median);
+	}
+
+
 }
