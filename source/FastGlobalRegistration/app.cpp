@@ -419,7 +419,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// std::cout << "Before optimization" << std::endl;
 
 
-	double gscale = 0.02;
+	double gscale = 0.05;
 
 	double totallike;
 	std::vector<double> likevecalpha(25, 0.0);
