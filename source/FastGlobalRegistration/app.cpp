@@ -455,7 +455,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				resnormvec.push_back(resnorm);
 			}
 
-			NormalizeRes(resnormvec);
+			// NormalizeRes(resnormvec);
 
 		    // firstly, keep c constant and maximize with respect to alpha
 			if (itr % 4 == 0){
