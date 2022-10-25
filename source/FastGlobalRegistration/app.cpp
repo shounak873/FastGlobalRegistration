@@ -404,7 +404,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int i = 0; i < 25; i++){
         for (int j = 0; j < 9; j++){
             constTable[i][j] = content[i][j];
-			std::cout << " constant read " << constTable[i][j] << std::endl;
+			// std::cout << " constant read " << constTable[i][j] << std::endl;
         }
     }
 
