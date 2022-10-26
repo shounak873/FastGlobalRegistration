@@ -407,7 +407,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 			// std::cout << " constant read " << constTable[i][j] << std::endl;
         }
     }
-
+	double gscale = 0.05;
 	//---------------------------------------------------------------------
 	std::vector<double> alpha{2.0,1.75,1.5,1.25,1.0,0.75,0.5,0.25,0.0,-0.25,-0.5,-0.75,-1.0,-1.25,-1.50,-1.75,-2.0,-2.25,-2.50,-2.75,-3.0,-3.25,-3.5,-3.75,-4.0};
 	double c = 1.0;
@@ -451,7 +451,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm();
+				double resnorm = rpq.norm()/gscale;
 				resnormvec.push_back(resnorm);
 			}
 
@@ -509,7 +509,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, c, alpha[minalphaind]);
+				s[c2] = robustcostWeight(res/gscale, c, alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
