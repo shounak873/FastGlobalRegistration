@@ -402,6 +402,8 @@ void CApp::OptimizePairwise()
 	double tol = 1e-7;
 	double c = 1.3;
 
+	double gscale = 0.05;
+
 	Eigen::Matrix4f trans;
 	Eigen::Matrix4f pretrans;
 	trans.setIdentity();
@@ -457,7 +459,7 @@ void CApp::OptimizePairwise()
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = hubercostWeight(res, c);
+				s[c2] = hubercostWeight(res/gscale, c);
 
 				J.setZero();
 				J(1) = -q(2);
