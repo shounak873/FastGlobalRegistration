@@ -399,7 +399,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
-        for (int j = 0; j < 9; j++){
+        for (int j = 0; j < 40; j++){
             constTable[i][j] = content[i][j];
 			// std::cout << "Constant value " <<  constTable[i][j] << std::endl;
         }
@@ -411,7 +411,8 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
                             -1.0, -1.25, -1.50, -1.75, -2.0, -2.25, -2.50, -2.75, -3.0, -3.25, -3.50, -3.75,
                             -4.0};
 
-    std::vector<double> c{1.0, 1.25, 1.50, 1.75, 2.0, 2.25, 2.50, 2.75, 3.0};
+    std::vector<double> c{0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+    0.95, 1.0 , 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65,1.7,1.75,1.8, 1.85, 1.90, 1.95, 2.0};
 
 
 	int minalphaind = 0;
@@ -419,11 +420,11 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// std::cout << "Before optimization" << std::endl;
 
 
-	double gscale = 0.05;
+	double gscale = 1.0;
 
 	double totallike;
 	std::vector<double> likevecalpha(25, 0.0);
-	std::vector<double> likevecc(9, 0.0);
+	std::vector<double> likevecc(40, 0.0);
 
 	std::vector<double> resnormvec;
 
@@ -808,10 +809,10 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 		else {
 	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
 
-		// double huberweight = hubercostWeight(r,c);
-		// if (huberweight < weight){
-		// 	weight = huberweight;
-		// }
+		double huberweight = hubercostWeight(r,c);
+		if (huberweight < weight){
+			weight = huberweight;
+		}
 		return weight;
 	}
 	else{
