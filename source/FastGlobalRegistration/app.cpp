@@ -416,7 +416,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 
 	int minalphaind = 0;
-	int mincind = 0;
+	int mincind = 19;
 	// std::cout << "Before optimization" << std::endl;
 
 
@@ -809,10 +809,10 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 		else {
 	    	weight = pow((r*r/(c*c*abs(alpha-2)) + 1),(alpha/2-1));}
 
-		double huberweight = hubercostWeight(r,c);
-		if (huberweight < weight){
-			weight = huberweight;
-		}
+		// double huberweight = hubercostWeight(r,c);
+		// if (huberweight < weight){
+		// 	weight = huberweight;
+		// }
 		return weight;
 	}
 	else{
