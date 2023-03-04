@@ -28,6 +28,8 @@
 // ----------------------------------------------------------------------------
 
 #include "app.h"
+#include <random>
+#include <cmath>
 
 using namespace Eigen;
 using namespace std;
@@ -139,7 +141,7 @@ void CApp::AdvancedMatching()
 	KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
 	BuildKDTree(features_[fj], &feature_tree_j);
 
-	bool crosscheck = true;
+	bool crosscheck = false;
 	bool tuple = true;
 
 	std::vector<int> corres_K, corres_K2;
@@ -155,11 +157,30 @@ void CApp::AdvancedMatching()
 	/// INITIAL MATCHING
 	///////////////////////////
 
+
+	// SIMULATE WRONG CORRESPONDENCES
+	// default_random_engine engine;
+	// engine.seed(100);
+	// uniform_real_distribution<double> distribution(0.0, 1.0);
+	// int num_outliers = 0;
+	int num_outliers = round(nPtj*0.3);
+	int gap = round(nPtj/num_outliers);
+
 	std::vector<int> i_to_j(nPti, -1);
 	for (int j = 0; j < nPtj; j++)
 	{
-		SearchKDTree(&feature_tree_i, features_[fj][j], corres_K, dis, 1);
-		int i = corres_K[0];
+		// double number = distribution(engine);
+		SearchKDTree(&feature_tree_i, features_[fj][j], corres_K, dis, 50);
+		int i;
+		// std::cout<< "Size of corres_K " << corres_K.size() << std::endl;
+		// std::cout<< dis[0] << ", " << dis[1] << ", " << dis[2] << ", " << dis[3] << ", " <<dis[4]<< std::endl;
+		if (j%gap == 0){
+			i = corres_K[49];
+		}
+		else{
+			i  = corres_K[0];
+		}
+
 		if (i_to_j[i] == -1)
 		{
 			SearchKDTree(&feature_tree_j, features_[fi][i], corres_K, dis, 1);
