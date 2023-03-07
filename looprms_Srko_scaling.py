@@ -29,7 +29,7 @@ empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_sca
 # pathexec = os.path.join(pathpkg, dir1)
 # pathdata = os.path.join(pathpkg, dir2)
 
-for i in range(25):
+for i in range(1):
     proc = subprocess.run(["build/FastGlobalRegistration/FastGlobalRegistration",
                            "dataset/pairwise_no_noise_" +
                            str(i+1) + "_rot_05/features_0000.bin",

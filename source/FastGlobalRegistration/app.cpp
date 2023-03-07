@@ -829,6 +829,7 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 		{
 			float a, b, c, d;
 			fscanf(fid, "%f %f %f %f", &a, &b, &c, &d);
+			std::cout << "a, b, c, d = " << a << " " << b << " " << c << " " << d << std::endl;
 			temp(j, 0) = a;
 			temp(j, 1) = b;
 			temp(j, 2) = c;
@@ -885,6 +886,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 
 	int ncorres = corres.size();
 	float err_mean = 0.0f;
+	std::cout << "ncorres " << ncorres << std::endl;
 
 	Points pci = pointcloud_[fi];
 	Points pcj = pointcloud_[fj];
