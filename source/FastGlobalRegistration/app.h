@@ -84,6 +84,7 @@ public:
 	double constTable[25][40];
 	double bestalpha = 2.0;
 	double bestc = 1.0;
+	double globalc = 1.0;
 
 
 private:

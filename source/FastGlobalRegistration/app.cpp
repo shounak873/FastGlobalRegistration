@@ -408,6 +408,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	printf("Pairwise rigid pose optimization\n");
 
 	int ConvergIter = 32;
+	int L1iter = 32;
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
@@ -460,6 +461,126 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int cnt = 0; cnt < npcj; cnt++)
 		pcj_copy[cnt] = pointcloud_[j][cnt];
 
+	for (int itr = 0; itr < L1iter; itr++){
+		// if(diff > tol){
+			// pretrans = trans;
+			std::cout << "Iteration number outer  -- " << itr << std::endl;
+			resnormvec.clear();
+			for (int cr = 0; cr < corres_.size(); cr++) {
+				int ii = corres_[cr].first;
+				int jj = corres_[cr].second;
+				Eigen::Vector3f p, q;
+				p = pointcloud_[i][ii];
+				q = pcj_copy[jj];
+				Eigen::Vector3f rpq = p - q;
+				double resnorm = rpq.norm()/gscale;
+				resnormvec.push_back(resnorm);
+			}
+
+			// secondly, do iteratively re-weighted least squares
+			int numIter = iteration_number_;
+			if (corres_.size() < 10)
+				return ;
+
+			std::vector<double> s(corres_.size(), 1.0);
+
+
+			// for (int itr = 0; itr < numIter; itr++) {
+
+			const int nvariable = 6;	// 3 for rotation and 3 for translation
+			Eigen::MatrixXd JTJ(nvariable, nvariable);
+			Eigen::MatrixXd JTr(nvariable, 1);
+			Eigen::MatrixXd J(nvariable, 1);
+			JTJ.setZero();
+			JTr.setZero();
+
+			double r;
+			double r2 = 0.0;
+
+			for (int cr = 0; cr < corres_.size(); cr++) {
+				int ii = corres_[cr].first;
+				int jj = corres_[cr].second;
+				Eigen::Vector3f p, q;
+				p = pointcloud_[i][ii];
+				q = pcj_copy[jj];
+				Eigen::Vector3f rpq = p - q;
+
+				int c2 = cr;
+				double res = rpq.norm();
+
+				// weights of residuals derived using rho'(x)/x
+
+				s[c2] = robustcostWeight(res, 1.0, 1.0);
+
+				J.setZero();
+				J(1) = -q(2);
+				J(2) = q(1);
+				J(3) = -1;
+				r = rpq(0);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				J.setZero();
+				J(2) = -q(0);
+				J(0) = q(2);
+				J(4) = -1;
+				r = rpq(1);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				J.setZero();
+				J(0) = -q(1);
+				J(1) = q(0);
+				J(5) = -1;
+				r = rpq(2);
+				JTJ += J * J.transpose() * s[c2];
+				JTr += J * r * s[c2];
+				r2 += r * r * s[c2];
+
+				// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
+			}
+
+			Eigen::MatrixXd result(nvariable, 1);
+			result = -JTJ.llt().solve(JTr);
+
+			Eigen::Affine3d aff_mat;
+			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
+				* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
+				* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
+			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
+
+			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
+			trans = delta * trans;
+			TransformPoints(pcj_copy, delta);
+		// }
+
+		// 	diff = (pretrans - trans).norm();
+		// 	std::cout << "Normed difference in trans -- " << diff << std::endl;
+		// 	std::cout << " ------------------------ " << std::endl;
+		// }
+		// else{
+		// 	break;
+		// }
+
+	}
+
+	// calculate scale from here
+
+	int numres = resnormvec.size();
+	// copy the vector and sort that.
+	std::sort(resnormvec.begin(), resnormvec.end());
+	int ind;
+	if (numres%2 == 0){
+		globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
+	}
+	else{
+		ind = (numres-1)/2 ;
+		globalc = resnormvec[ind]/0.675;
+	}
+
+
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
@@ -473,7 +594,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm()/gscale;
+				double resnorm = rpq.norm()/globalc;
 				// std::cout << "Residual norm - " << resnorm << endl;
 				resnormvec.push_back(resnorm);
 			}
@@ -580,7 +701,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res/gscale, c[mincind], alpha[minalphaind]);
+				s[c2] = robustcostWeight(res/globalc, c[mincind], alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -639,6 +760,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
 	std::cout << "Best c -- " << c[mincind] << endl;
+	std::cout << "Global c -- " << globalc << endl;
 	std::cout << " ------------------------ " << std::endl;
 
 	TransOutput_ = trans * TransOutput_;
@@ -682,7 +804,7 @@ void CApp::WriteTrans(const char* filepath)
 	// '2' indicates that there are two point cloud fragments.
 	int val = 0;
 
-	fprintf(fid, "%d %lf %lf\n", val, bestalpha, bestc);
+	fprintf(fid, "%d %lf %lf %lf\n", val, bestalpha, bestc, globalc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
@@ -699,9 +821,9 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 	Eigen::Matrix4f temp;
 	temp.fill(0);
 	int temp0, cnt = 0;
-	double alphaB, cB;
+	double alphaB, cB, cG;
 	FILE* fid = fopen(filename, "r");
-	while (fscanf(fid, "%d %lf %lf", &temp0, &alphaB, &cB) == 3)
+	while (fscanf(fid, "%d %lf %lf %lf", &temp0, &alphaB, &cB, &cG) == 4)
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -751,10 +873,10 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	Eigen::Matrix4f gth_trans = ReadTrans(gth);
 
 	int temp0;
-	double alphaB, cB;
+	double alphaB, cB, cG;
 
 	FILE* fid0 = fopen(estimation, "r");
-	fscanf(fid0, "%d %lf %lf", &temp0, &alphaB, &cB);
+	fscanf(fid0, "%d %lf %lf %lf", &temp0, &alphaB, &cB, &cG);
 	fclose(fid0);
 
 	BuildDenseCorrespondence(gth_trans, corres);
@@ -793,7 +915,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	// write errors
 	// Remember to clear results folder after running looprms once !
 	FILE* fid = fopen(output, "a");
-	fprintf(fid, "%d %d %lf %lf %.6f %.4f %.4f\n", fi, fj, alphaB, cB, err_mean,
+	fprintf(fid, "%d %d %lf %lf %lf %.6f %.4f %.4f\n", fi, fj, alphaB, cB, cG, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }
