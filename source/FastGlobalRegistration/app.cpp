@@ -398,7 +398,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
     std::string line;
     double value2;
     int rowNum = 0;
-	int ConvergIter = 32;
+	int ConvergIter = 64;
 	int L1iter = 32; // for finding the initializers
 	double tol = 1e-7;
 
@@ -441,7 +441,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	// first solve for the L1 estimate with alpha = 1, c = 1
 
-	for (int itr = 0; itr < L1Iter; itr++){
+	for (int itr = 0; itr < L1iter; itr++){
 		// if(diff > tol){
 			// pretrans = trans;
 			std::cout << "Iteration number outer  -- " << itr << std::endl;
@@ -549,16 +549,22 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// calculate scale from here
 
 	int numres = resnormvec.size();
-	std::sort(resnormvec.begin(), resnormvec.end())
+	// copy the vector and sort that.
+	std::sort(resnormvec.begin(), resnormvec.end());
 	int ind;
 	if (numres%2 == 0){
-		ind = ((numres/2)-1 + (numres/2))/2
+		bestc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
 	}
 	else{
 		ind = (numres-1)/2 ;
+		bestc = resnormvec[ind]/0.675;
 	}
- 	bestc = resnormvec[ind]/0.675;
+
+	// anneal alpha
+	std::vector<double> annealvec {2.0, 1.0, 0.5, 0.25, 0, -0.25, -0.5, -1, -2, -4, -8, -16, -32};
+	int g = 0;
 	// Main iteration cycle starts
+
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
 			pretrans = trans;
@@ -579,22 +585,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 		    // firstly, keep c constant and maximize with respect to alpha
 			if (itr % 4 == 0){
-				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
-				for(int ip =0; ip < lenalpha; ip++){
-					totallike = 0.0;
-					for(auto it2 : resnormvec){
-						if(abs(it2) <= 10){
-							totallike += robustcost(it2,1.0, alpha[ip]) + log(constTable[ip][0]);
-						}
-					}
-					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
-					likevecalpha[ip] = totallike;
+				if (g <13){
+					bestalpha = annealvec[g];
+					g = g+1;
 				}
-
-			    auto smallest = std::min_element(likevecalpha.begin(), likevecalpha.end());
-			    minalphaind = std::distance(likevecalpha.begin(), smallest);
-				std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
-				bestalpha = alpha[minalphaind];
 			}
 			// secondly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
@@ -629,7 +623,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res/gscale, c, alpha[minalphaind]);
+				s[c2] = robustcostWeight(res/gscale, bestc, bestalpha);
 
 				J.setZero();
 				J(1) = -q(2);
