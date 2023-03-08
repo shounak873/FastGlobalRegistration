@@ -804,7 +804,7 @@ void CApp::WriteTrans(const char* filepath)
 	// '2' indicates that there are two point cloud fragments.
 	int val = 0;
 
-	fprintf(fid, "%d %lf %lf %lf\n", val, bestalpha, bestc, globalc);
+	fprintf(fid, "%lf %lf %lf\n", val, bestalpha, bestc, globalc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
@@ -823,7 +823,7 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 	int temp0, cnt = 0;
 	double alphaB, cB, cG;
 	FILE* fid = fopen(filename, "r");
-	while (fscanf(fid, "%d %lf %lf %lf", &temp0, &alphaB, &cB, &cG) == 4)
+	while (fscanf(fid, "%lf %lf %lf", &alphaB, &cB, &cG) == 3)
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -877,7 +877,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	double alphaB, cB, cG;
 
 	FILE* fid0 = fopen(estimation, "r");
-	fscanf(fid0, "%d %lf %lf %lf", &temp0, &alphaB, &cB, &cG);
+	fscanf(fid0, "%lf %lf %lf",&alphaB, &cB, &cG);
 	fclose(fid0);
 
 	BuildDenseCorrespondence(gth_trans, corres);
