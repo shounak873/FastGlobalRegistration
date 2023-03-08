@@ -553,17 +553,13 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	std::sort(resnormvec.begin(), resnormvec.end());
 	int ind;
 	if (numres%2 == 0){
-		bestc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
+		globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
 	}
 	else{
 		ind = (numres-1)/2 ;
-		bestc = resnormvec[ind]/0.675;
+		globalc = resnormvec[ind]/0.675;
 	}
 
-	// anneal alpha
-	std::vector<double> annealvec {2.0, 1.0, 0.5, 0.25, 0, -0.25, -0.5, -1, -2, -4, -8, -16, -32};
-	int g = 0;
-	// Main iteration cycle starts
 
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
@@ -577,7 +573,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm()/gscale;
+				double resnorm = rpq.norm()/globalc;
 				resnormvec.push_back(resnorm);
 			}
 

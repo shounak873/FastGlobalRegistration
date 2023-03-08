@@ -77,6 +77,7 @@ public:
 	double bestalpha;
 	double bestc;
 	double constTable[25][9];
+	double globalc;
 
 private:
 	// containers
