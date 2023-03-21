@@ -398,7 +398,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
     std::string line;
     double value2;
     int rowNum = 0;
-	int ConvergIter = 64;
+	int ConvergIter = 32;
 	int L1iter = 32; // for finding the initializers
 	double tol = 1e-7;
 
@@ -444,7 +444,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int itr = 0; itr < L1iter; itr++){
 		// if(diff > tol){
 			// pretrans = trans;
-			std::cout << "Iteration number outer  -- " << itr << std::endl;
+			// std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
 				int ii = corres_[cr].first;
@@ -564,7 +564,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
 			pretrans = trans;
-			std::cout << "Iteration number outer  -- " << itr << std::endl;
+			// std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
 				int ii = corres_[cr].first;
@@ -581,10 +581,23 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 		    // firstly, keep c constant and maximize with respect to alpha
 			if (itr % 4 == 0){
-				if (g <13){
-					bestalpha = annealvec[g];
-					g = g+1;
+				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
+				for(int ip =0; ip < lenalpha; ip++){
+					totallike = 0.0;
+					for(auto it2 : resnormvec){
+						if(abs(it2) <= 10){
+							totallike += robustcost(it2,1.0, alpha[ip]) + log(constTable[ip][0]);
+						}
+					}
+					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = 1 is " << totallike << endl;
+					likevecalpha[ip] = totallike;
 				}
+
+			    auto smallest = std::min_element(likevecalpha.begin(), likevecalpha.end());
+			    minalphaind = std::distance(likevecalpha.begin(), smallest);
+				std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
+				std::cout << "Global c --" << globalc << std::endl;
+				bestalpha = alpha[minalphaind];
 			}
 			// secondly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
@@ -619,7 +632,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res/gscale, bestc, bestalpha);
+				s[c2] = robustcostWeight(res/globalc, c, alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -676,6 +689,10 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	}
 
 	TransOutput_ = trans * TransOutput_;
+	// std::cout << "Output transformation " << TransOutput_(0,0) << TransOutput_(0,1) <<  TransOutput_(0,2) << TransOutput_(0,3) << std::endl;
+	// std::cout << TransOutput_(1,0) << TransOutput_(1,1) <<  TransOutput_(1,2) << TransOutput_(1,3) << std::endl;
+	// std::cout << TransOutput_(2,0) << TransOutput_(2,1) <<  TransOutput_(2,2) << TransOutput_(2,3) << std::endl;
+	// std::cout << TransOutput_(3,0) << TransOutput_(3,1) <<  TransOutput_(3,2) << TransOutput_(3,3) << std::endl;
 	// return par;
 }
 
@@ -711,6 +728,7 @@ Eigen::Matrix4f CApp::GetOutputTrans()
 void CApp::WriteTrans(const char* filepath)
 {
 	FILE* fid = fopen(filepath, "w");
+	// std::cout << "Writing transformation" << std::endl;
 
 	// Below line indicates how the transformation matrix aligns two point clouds
 	// e.g. T * pointcloud_[1] is aligned with pointcloud_[0].
@@ -720,6 +738,8 @@ void CApp::WriteTrans(const char* filepath)
 	fprintf(fid, "%d %lf %lf\n", val, bestalpha, bestc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
+
+	// std::cout <<"Written to file" << transtemp(0, 1) << std::endl;
 
 	fprintf(fid, "%.10f %.10f %.10f %.10f\n", transtemp(0, 0), transtemp(0, 1), transtemp(0, 2), transtemp(0, 3));
 	fprintf(fid, "%.10f %.10f %.10f %.10f\n", transtemp(1, 0), transtemp(1, 1), transtemp(1, 2), transtemp(1, 3));
