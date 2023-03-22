@@ -157,7 +157,7 @@ void CApp::AdvancedMatching()
 	/// INITIAL MATCHING
 	///////////////////////////
 
-	int num_outliers = round(nPtj*0.3);
+	int num_outliers = round(nPtj*0.7);
 	int gap = round(nPtj/num_outliers);
 
 	std::vector<int> i_to_j(nPti, -1);
@@ -521,32 +521,32 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	        	bestc = c[mincind];
 			}
 
-			if  (itr == 28){
-				std::cout << "alpha likelihood" << std::endl;
-				for (int i = 0; i < likevecalpha.size(); i++){
-					std::cout << likevecalpha[i] << " , ";
-				}
-				std::cout << " --------" << std::endl;
-				std::cout << "c likelihood" << std::endl;
-				for (int i = 0; i < likevecc.size(); i++){
-					std::cout << likevecc[i] << " , ";;
-				}
-				std::cout << " --------" << std::endl;
-				fstream file;
-	            std::string path = "/home/navlab-shounak/Desktop/resnormvec.txt";
-	            file.open(path,ios_base::out);
-
-	            for(int i=0;i<resnormvec.size();i++)
-	            {
-					if(i ==0){
-						file << bestalpha <<std::endl;
-						file << bestc << std::endl;
-					}
-	                file<<resnormvec[i]<<endl;
-	            }
-
-	            file.close();
-			}
+			// if  (itr == 28){
+			// 	std::cout << "alpha likelihood" << std::endl;
+			// 	for (int i = 0; i < likevecalpha.size(); i++){
+			// 		std::cout << likevecalpha[i] << " , ";
+			// 	}
+			// 	std::cout << " --------" << std::endl;
+			// 	std::cout << "c likelihood" << std::endl;
+			// 	for (int i = 0; i < likevecc.size(); i++){
+			// 		std::cout << likevecc[i] << " , ";;
+			// 	}
+			// 	std::cout << " --------" << std::endl;
+			// 	fstream file;
+	        //     std::string path = "/home/navlab-shounak/Desktop/resnormvec.txt";
+	        //     file.open(path,ios_base::out);
+			//
+	        //     for(int i=0;i<resnormvec.size();i++)
+	        //     {
+			// 		if(i ==0){
+			// 			file << bestalpha <<std::endl;
+			// 			file << bestc << std::endl;
+			// 		}
+	        //         file<<resnormvec[i]<<endl;
+	        //     }
+			//
+	        //     file.close();
+			// }
 			// thirdly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
