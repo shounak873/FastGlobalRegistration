@@ -19,8 +19,8 @@ def empty_directory(path):
         remove_thing(i)
 
 
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_scaled_noisy/')
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy/')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_10_scaled/')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_10_scaled/')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -31,21 +31,21 @@ empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_sca
 
 for i in range(25):
     proc = subprocess.run(["build/FastGlobalRegistration/FastGlobalRegistration",
-                           "dataset/pairwise_noise_xyz_level_02_" +
+                           "dataset/pairwise_no_noise_" +
                            str(i+1) + "_rot_05/features_0000.bin",
-                           "dataset/pairwise_noise_xyz_level_02_" +
+                           "dataset/pairwise_no_noise_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy/" + str(i+1) + "_rot_05_output" + ".txt"])
+                           "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_10_scaled/" + str(i+1) + "_rot_05_output" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
-                            "dataset/pairwise_noise_xyz_level_02_" +
+                            "dataset/pairwise_no_noise_" +
                             str(i+1) + "_rot_05/features_0000.bin",
-                            "dataset/pairwise_noise_xyz_level_02_" +
+                            "dataset/pairwise_no_noise_" +
                             str(i+1) + "_rot_05/features_0001.bin",
-                            "dataset/pairwise_noise_xyz_level_02_" +
+                            "dataset/pairwise_no_noise_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy/" +
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_10_scaled/" +
                             str(i+1) + "_rot_05_output" + ".txt",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_scaled_noisy/" + str(i+1) + ".txt"])
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_10_scaled/" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()
