@@ -141,7 +141,7 @@ void CApp::AdvancedMatching()
 	KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
 	BuildKDTree(features_[fj], &feature_tree_j);
 
-	bool crosscheck = false;
+	bool crosscheck = true;
 	bool tuple = true;
 
 	std::vector<int> corres_K, corres_K2;
@@ -163,7 +163,7 @@ void CApp::AdvancedMatching()
 	// engine.seed(100);
 	// uniform_real_distribution<double> distribution(0.0, 1.0);
 	// int num_outliers = 0;
-	int num_outliers = round(nPtj*0.3);
+	int num_outliers = round(nPtj*0.7);
 	int gap = round(nPtj/num_outliers);
 
 	std::vector<int> i_to_j(nPti, -1);
@@ -175,7 +175,7 @@ void CApp::AdvancedMatching()
 		// std::cout<< "Size of corres_K " << corres_K.size() << std::endl;
 		// std::cout<< dis[0] << ", " << dis[1] << ", " << dis[2] << ", " << dis[3] << ", " <<dis[4]<< std::endl;
 		if (j%gap == 0){
-			i = corres_K[49];
+			i = corres_K[0];
 		}
 		else{
 			i  = corres_K[0];
