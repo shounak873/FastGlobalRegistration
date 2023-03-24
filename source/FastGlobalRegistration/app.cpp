@@ -140,8 +140,8 @@ void CApp::AdvancedMatching()
 	KDTree feature_tree_j(flann::KDTreeSingleIndexParams(15));
 	BuildKDTree(features_[fj], &feature_tree_j);
 
-	bool crosscheck = true;
-	bool tuple = true;
+	bool crosscheck = false;
+	bool tuple = false;
 
 	std::vector<int> corres_K, corres_K2;
 	std::vector<float> dis;
@@ -156,32 +156,57 @@ void CApp::AdvancedMatching()
 	/// INITIAL MATCHING
 	///////////////////////////
 
+	// std::vector<int> i_to_j(nPti, -1);
+	// for (int j = 0; j < nPtj; j++)
+	// {
+	// 	SearchKDTree(&feature_tree_i, features_[fj][j], corres_K, dis, 1);
+	// 	int i = corres_K[0];
+	// 	if (i_to_j[i] == -1)
+	// 	{
+	// 		SearchKDTree(&feature_tree_j, features_[fi][i], corres_K, dis, 1);
+	// 		int ij = corres_K[0];
+	// 		i_to_j[i] = ij;
+	// 	}
+	// 	corres_ji.push_back(std::pair<int, int>(i, j));
+	// }
+	int num_outliers = round(nPtj*0.7);
+	int gap = round(nPtj/num_outliers);
+
 	std::vector<int> i_to_j(nPti, -1);
 	for (int j = 0; j < nPtj; j++)
 	{
-		SearchKDTree(&feature_tree_i, features_[fj][j], corres_K, dis, 1);
-		int i = corres_K[0];
-		if (i_to_j[i] == -1)
-		{
-			SearchKDTree(&feature_tree_j, features_[fi][i], corres_K, dis, 1);
-			int ij = corres_K[0];
-			i_to_j[i] = ij;
+		// double number = distribution(engine);
+		SearchKDTree(&feature_tree_i, features_[fj][j], corres_K, dis, 50);
+		int i;
+		// std::cout<< "Size of corres_K " << corres_K.size() << std::endl;
+		// std::cout<< dis[0] << ", " << dis[1] << ", " << dis[2] << ", " << dis[3] << ", " <<dis[4]<< std::endl;
+		if (j%gap == 0){
+			i = corres_K[49];
 		}
+		else{
+			i  = corres_K[0];
+		}
+		// if (i_to_j[i] == -1)
+		// {
+		// 	SearchKDTree(&feature_tree_j, features_[fi][i], corres_K, dis, 1);
+		// 	int ij = corres_K[0];
+		// 	i_to_j[i] = ij;
+		// }
 		corres_ji.push_back(std::pair<int, int>(i, j));
 	}
 
-	for (int i = 0; i < nPti; i++)
-	{
-		if (i_to_j[i] != -1)
-			corres_ij.push_back(std::pair<int, int>(i, i_to_j[i]));
-	}
+	// for (int i = 0; i < nPti; i++)
+	// {
+	// 	if (i_to_j[i] != -1)
+	// 		corres_ij.push_back(std::pair<int, int>(i, i_to_j[i]));
+	// }
 
 	int ncorres_ij = corres_ij.size();
 	int ncorres_ji = corres_ji.size();
 
 	// corres = corres_ij + corres_ji;
-	for (int i = 0; i < ncorres_ij; ++i)
-		corres.push_back(std::pair<int, int>(corres_ij[i].first, corres_ij[i].second));
+	// for (int i = 0; i < ncorres_ij; ++i)
+	// 	corres.push_back(std::pair<int, int>(corres_ij[i].first, corres_ij[i].second));
 	for (int j = 0; j < ncorres_ji; ++j)
 		corres.push_back(std::pair<int, int>(corres_ji[j].first, corres_ji[j].second));
 
