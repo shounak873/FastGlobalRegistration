@@ -157,7 +157,7 @@ void CApp::AdvancedMatching()
 	/// INITIAL MATCHING
 	///////////////////////////
 
-	int num_outliers = round(nPtj*0.1);
+	int num_outliers = round(nPtj*0.4);
 	int gap = round(nPtj/num_outliers);
 
 	std::vector<int> i_to_j(nPti, -1);
@@ -407,8 +407,8 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	int ConvergIter = 32;
-	int L1iter = 32;
+	int ConvergIter = 50;
+	int L1iter = 50;
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
@@ -473,7 +473,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm()/gscale;
+				double resnorm = rpq.norm();
 				resnormvec.push_back(resnorm);
 			}
 
@@ -572,6 +572,17 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// copy the vector and sort that.
 	std::sort(resnormvec.begin(), resnormvec.end());
 	int ind;
+	double median;
+	// if (numres%2 == 0){
+	// 	median = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/2;
+	// }
+	// else{
+	// 	ind = (numres-1)/2 ;
+	// 	median = resnormvec[ind];
+	// }
+	// for(auto& element : resnormvec)
+    // 	element = std::abs(element - median);
+
 	if (numres%2 == 0){
 		globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
 	}
@@ -579,7 +590,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 		ind = (numres-1)/2 ;
 		globalc = resnormvec[ind]/0.675;
 	}
-
+	globalc = 0.08;
 
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
