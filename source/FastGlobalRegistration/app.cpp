@@ -461,9 +461,9 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int cnt = 0; cnt < npcj; cnt++)
 		pcj_copy[cnt] = pointcloud_[j][cnt];
 
-	for (int itr = 0; itr < L1iter; itr++){
+	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
-			// pretrans = trans;
+			pretrans = trans;
 			std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
@@ -473,19 +473,47 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm()/gscale;
+				double resnorm = rpq.norm();
+				// std::cout << "Residual norm - " << resnorm << endl;
 				resnormvec.push_back(resnorm);
 			}
 
-			// secondly, do iteratively re-weighted least squares
+			// if  (itr == 28){
+			std::cout << "Starting alpha and c " << std::endl;
+			std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+
+			// NormalizeRes(resnormvec);
+			// }
+
+		    // firstly, keep c constant and maximize with respect to alpha
+			if(itr % 4 == 0){
+				// secondly, keep alpha constant and maximize with respect to c
+				std::fill(likevecc.begin(), likevecc.end(), 0.0);
+				for(int jq =0; jq < lenc; jq++){
+					totallike = 0.0;
+					for(auto it2 : resnormvec){
+						if (it2 <= 10){
+							totallike = totallike + robustcost(it2,c[jq], alpha[minalphaind]) + log(constTable[minalphaind][jq]);
+						}
+					}
+					// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
+					likevecc[jq] = totallike;
+				}
+
+				auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
+	        	mincind = std::distance(likevecc.begin(), smallest2);
+	        	bestc = c[mincind];
+			}
+
+			// thirdly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
-				return ;
+				return;
 
 			std::vector<double> s(corres_.size(), 1.0);
 
 
-			// for (int itr = 0; itr < numIter; itr++) {
+			// for (int itr2 = 0; itr2 < numIter; itr2++) {
 
 			const int nvariable = 6;	// 3 for rotation and 3 for translation
 			Eigen::MatrixXd JTJ(nvariable, nvariable);
@@ -510,7 +538,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res, 1.0, 1.0);
+				s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -544,6 +572,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 			Eigen::MatrixXd result(nvariable, 1);
 			result = -JTJ.llt().solve(JTr);
+			//std::cout << "Result is " << result << std::endl;
 
 			Eigen::Affine3d aff_mat;
 			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
@@ -554,7 +583,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
 			trans = delta * trans;
 			TransformPoints(pcj_copy, delta);
-		// }
+			// }
 
 		// 	diff = (pretrans - trans).norm();
 		// 	std::cout << "Normed difference in trans -- " << diff << std::endl;
@@ -566,19 +595,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	}
 
-	// calculate scale from here
-
-	int numres = resnormvec.size();
-	// copy the vector and sort that.
-	std::sort(resnormvec.begin(), resnormvec.end());
-	int ind;
-	if (numres%2 == 0){
-		globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
-	}
-	else{
-		ind = (numres-1)/2 ;
-		globalc = resnormvec[ind]/0.675;
-	}
 
 
 	// Main iteration cycle starts
@@ -594,7 +610,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				p = pointcloud_[i][ii];
 				q = pcj_copy[jj];
 				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm()/globalc;
+				double resnorm = rpq.norm();
 				// std::cout << "Residual norm - " << resnorm << endl;
 				resnormvec.push_back(resnorm);
 			}
@@ -624,22 +640,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 		        minalphaind = std::distance(likevecalpha.begin(), smallest);
 		        bestalpha = alpha[minalphaind];
 
-				// secondly, keep alpha constant and maximize with respect to c
-				std::fill(likevecc.begin(), likevecc.end(), 0.0);
-				for(int jq =0; jq < lenc; jq++){
-					totallike = 0.0;
-					for(auto it2 : resnormvec){
-						if (it2 <= 10){
-							totallike = totallike + robustcost(it2,c[jq], alpha[minalphaind]) + log(constTable[minalphaind][jq]);
-						}
-					}
-					// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
-					likevecc[jq] = totallike;
-				}
-
-				auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
-	        	mincind = std::distance(likevecc.begin(), smallest2);
-	        	bestc = c[mincind];
 			}
 
 			// if  (itr == 28){
@@ -701,7 +701,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 				// weights of residuals derived using rho'(x)/x
 
-				s[c2] = robustcostWeight(res/globalc, c[mincind], alpha[minalphaind]);
+				s[c2] = robustcostWeight(res, c[mincind], alpha[minalphaind]);
 
 				J.setZero();
 				J(1) = -q(2);
@@ -760,7 +760,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 	std::cout << "Best alpha -- " << alpha[minalphaind] << endl;
 	std::cout << "Best c -- " << c[mincind] << endl;
-	std::cout << "Global c -- " << globalc << endl;
+	// std::cout << "Global c -- " << globalc << endl;
 	std::cout << " ------------------------ " << std::endl;
 
 	TransOutput_ = trans * TransOutput_;
@@ -804,7 +804,7 @@ void CApp::WriteTrans(const char* filepath)
 	// '2' indicates that there are two point cloud fragments.
 	int val = 0;
 
-	fprintf(fid, "%lf %lf %lf\n", bestalpha, bestc, globalc);
+	fprintf(fid, "%lf %lf %lf\n",val, bestalpha, bestc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
