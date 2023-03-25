@@ -629,7 +629,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 					totallike = 0.0;
 					for(auto it2 : resnormvec){
 						if (it2 <= 10){
-							totallike = totallike + robustcost(it2,c[mincind], alpha[ip]) + log(constTable[ip][mincind]);
+							totallike = totallike + robustcost(it2/c[mincind],1.0, alpha[ip]) + log(constTable[ip][mincind]);
 						}
 					}
 					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
@@ -642,32 +642,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 
 			}
 
-			// if  (itr == 28){
-			// 	std::cout << "alpha likelihood" << std::endl;
-			// 	for (int i = 0; i < likevecalpha.size(); i++){
-			// 		std::cout << likevecalpha[i] << " , ";
-			// 	}
-			// 	std::cout << " --------" << std::endl;
-			// 	std::cout << "c likelihood" << std::endl;
-			// 	for (int i = 0; i < likevecc.size(); i++){
-			// 		std::cout << likevecc[i] << " , ";;
-			// 	}
-			// 	std::cout << " --------" << std::endl;
-			// 	fstream file;
-	        //     std::string path = "/home/navlab-shounak/Desktop/resnormvec.txt";
-	        //     file.open(path,ios_base::out);
-			//
-	        //     for(int i=0;i<resnormvec.size();i++)
-	        //     {
-			// 		if(i ==0){
-			// 			file << bestalpha <<std::endl;
-			// 			file << bestc << std::endl;
-			// 		}
-	        //         file<<resnormvec[i]<<endl;
-	        //     }
-			//
-	        //     file.close();
-			// }
 			// thirdly, do iteratively re-weighted least squares
 			int numIter = iteration_number_;
 			if (corres_.size() < 10)
@@ -804,7 +778,7 @@ void CApp::WriteTrans(const char* filepath)
 	// '2' indicates that there are two point cloud fragments.
 	int val = 0;
 
-	fprintf(fid, "%lf %lf %lf\n",val, bestalpha, bestc);
+	fprintf(fid, "%d %lf %lf\n",val, bestalpha, bestc);
 
 	Eigen::Matrix4f transtemp = GetOutputTrans();
 
@@ -823,7 +797,7 @@ Eigen::Matrix4f CApp::ReadTrans(const char* filename)
 	int temp0, cnt = 0;
 	double alphaB, cB, cG;
 	FILE* fid = fopen(filename, "r");
-	while (fscanf(fid, "%lf %lf %lf", &alphaB, &cB, &cG) == 3)
+	while (fscanf(fid, "%d %lf %lf",&temp0, &alphaB, &cB) == 3)
 	{
 		for (int j = 0; j < 4; j++)
 		{
@@ -877,7 +851,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	double alphaB, cB, cG;
 
 	FILE* fid0 = fopen(estimation, "r");
-	fscanf(fid0, "%lf %lf %lf",&alphaB, &cB, &cG);
+	fscanf(fid0, "%d %lf %lf", &temp0, &alphaB, &cB);
 	fclose(fid0);
 
 	BuildDenseCorrespondence(gth_trans, corres);
@@ -917,7 +891,7 @@ void CApp::Evaluation(const char* gth, const char* estimation, const char *outpu
 	// write errors
 	// Remember to clear results folder after running looprms once !
 	FILE* fid = fopen(output, "a");
-	fprintf(fid, "%d %d %lf %lf %lf %.6f %.4f %.4f\n", fi, fj, alphaB, cB, cG, err_mean,
+	fprintf(fid, "%d %d %lf %lf %.6f %.4f %.4f\n", fi, fj, alphaB, cB, err_mean,
 			inlier_ratio, overlapping_ratio);
 	fclose(fid);
 }
