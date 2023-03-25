@@ -407,8 +407,8 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 {
 	printf("Pairwise rigid pose optimization\n");
 
-	int ConvergIter = 50;
-	int L1iter = 50;
+	int ConvergIter = 32;
+	int L1iter = 32;
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
