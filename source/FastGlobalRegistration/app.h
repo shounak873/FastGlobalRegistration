@@ -81,7 +81,7 @@ public:
 	double robustcostWeight(double r, double c, double alpha);
 	double hubercostWeight(double r, double c);
 	void NormalizeRes(std::vector<double>& resnormvec);
-	double constTable[25][40];
+	double constTable[25][19];
 	double bestalpha = 2.0;
 	double bestc = 1.0;
 	double globalc = 1.0;

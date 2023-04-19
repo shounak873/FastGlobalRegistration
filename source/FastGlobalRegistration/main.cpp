@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	string fname = "/home/navlab-shounak/FastGlobalRegistration/source/FastGlobalRegistration/table.txt";
+	string fname = "/home/navlab-shounak/FastGlobalRegistration/source/FastGlobalRegistration/tableNew100.txt";
 
 	vector<vector<double>> content;
 	vector<double> row;

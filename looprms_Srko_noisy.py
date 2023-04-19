@@ -19,8 +19,8 @@ def empty_directory(path):
         remove_thing(i)
 
 
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO/noisy')
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO/noisy_output')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_scaled_noisy_const/')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy_const/')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -35,7 +35,7 @@ for i in range(25):
                            str(i+1) + "_rot_05/features_0000.bin",
                            "dataset/pairwise_noise_xyz_level_02_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "/home/navlab-shounak/Desktop/RegResults/SRKO/noisy_output/" + str(i+1) + "_rot_05_output" + ".txt"])
+                           "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy_const/" + str(i+1) + "_rot_05_output" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
                             "dataset/pairwise_noise_xyz_level_02_" +
@@ -44,8 +44,8 @@ for i in range(25):
                             str(i+1) + "_rot_05/features_0001.bin",
                             "dataset/pairwise_noise_xyz_level_02_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO/noisy_output/" +
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_scaled_noisy_const/" +
                             str(i+1) + "_rot_05_output" + ".txt",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO/noisy/noisy_eval_collection_" + str(i+1) + ".txt"])
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_scaled_noisy_const/" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()

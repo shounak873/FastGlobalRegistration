@@ -19,8 +19,8 @@ def empty_directory(path):
         remove_thing(i)
 
 
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_40_scaled/')
-empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_40_scaled/')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt_tau/eval_50_tau_100/')
+empty_directory('/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt_tau/output_50_tau_100/')
 
 # pathpkg = os.getcwd()
 # dir1 = "build/FastGlobalRegistration"
@@ -35,7 +35,7 @@ for i in range(25):
                            str(i+1) + "_rot_05/features_0000.bin",
                            "dataset/pairwise_no_noise_" +
                            str(i+1) + "_rot_05/features_0001.bin",
-                           "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_40_scaled/" + str(i+1) + "_rot_05_output" + ".txt"])
+                           "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt_tau/output_50_tau_100/" + str(i+1) + "_rot_05_output" + ".txt"])
 
     proc2 = subprocess.run(["build/FastGlobalRegistration/Evaluation",
                             "dataset/pairwise_no_noise_" +
@@ -44,8 +44,8 @@ for i in range(25):
                             str(i+1) + "_rot_05/features_0001.bin",
                             "dataset/pairwise_no_noise_" +
                             str(i+1) + "_rot_05/gt.log",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/output_40_scaled/" +
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt_tau/output_50_tau_100/" +
                             str(i+1) + "_rot_05_output" + ".txt",
-                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt/eval_40_scaled/" + str(i+1) + ".txt"])
+                            "/home/navlab-shounak/Desktop/RegResults/SRKO_corrupt_tau/eval_50_tau_100/" + str(i+1) + ".txt"])
     # proc.wait()
     # proc.kill()

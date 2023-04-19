@@ -157,7 +157,7 @@ void CApp::AdvancedMatching()
 	/// INITIAL MATCHING
 	///////////////////////////
 
-	int num_outliers = round(nPtj*0.4);
+	int num_outliers = round(nPtj*0.5);
 	int gap = round(nPtj/num_outliers);
 
 	std::vector<int> i_to_j(nPti, -1);
@@ -412,7 +412,7 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	double tol = 1e-7;
 
 	for (int i = 0; i < 25; i++){
-        for (int j = 0; j < 40; j++){
+        for (int j = 0; j < 19; j++){
             constTable[i][j] = content[i][j];
 			// std::cout << "Constant value " <<  constTable[i][j] << std::endl;
         }
@@ -424,20 +424,31 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
                             -1.0, -1.25, -1.50, -1.75, -2.0, -2.25, -2.50, -2.75, -3.0, -3.25, -3.50, -3.75,
                             -4.0};
 
-    std::vector<double> c{0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
-    0.95, 1.0 , 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65,1.7,1.75,1.8, 1.85, 1.90, 1.95, 2.0};
+	// std::vector<double> alpha{2.0, 1.75, 1.50, 1.25, 1.0, 0.75, 0.50, 0.25, 0.0, -0.25, -0.50, -0.75,
+    //                         -1.0, -1.25, -1.50, -1.75, -2.0, -2.25, -2.50, -2.75, -3.0, -3.25, -3.50, -3.75,
+    //                         -4.0, -4.25, -4.50, -4.75, -5.0, -5.25, -5.50, -5.75, -6.0, -6.25, -6.50, -6.75,
+    //                         -7.0, -7.25, -7.50, -7.75, -8.0};
 
+    std::vector<double> c{0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+    0.95, 1.0 };
 
-	int minalphaind = 0;
-	int mincind = 19;
+	// std::vector<double> c{0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+    // 0.95, 1.0 , 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65,1.7,1.75,1.8, 1.85, 1.90, 1.95, 2.0};
+
+	int minalphaind = 1;
+	int mincind = 18;
+
+	std::vector<double> graduated_alpha{2.0, 1.0, 0.5, 0.25, 0.0, -0.25, -0.5, -1.0, -2.0, -4.0, -8.0, -16.0, -32.0};
+	std::vector<double> graduated_c{1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.0156, 0.007};
 	// std::cout << "Before optimization" << std::endl;
 
 
 	double gscale = 1.0;
 
 	double totallike;
+	// std::vector<double> likevecalpha(25, 0.0);
 	std::vector<double> likevecalpha(25, 0.0);
-	std::vector<double> likevecc(40, 0.0);
+	std::vector<double> likevecc(19, 0.0);
 
 	std::vector<double> resnormvec;
 
@@ -461,118 +472,118 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	for (int cnt = 0; cnt < npcj; cnt++)
 		pcj_copy[cnt] = pointcloud_[j][cnt];
 
-	for (int itr = 0; itr < L1iter; itr++){
-		// if(diff > tol){
-			// pretrans = trans;
-			std::cout << "Iteration number outer  -- " << itr << std::endl;
-			resnormvec.clear();
-			for (int cr = 0; cr < corres_.size(); cr++) {
-				int ii = corres_[cr].first;
-				int jj = corres_[cr].second;
-				Eigen::Vector3f p, q;
-				p = pointcloud_[i][ii];
-				q = pcj_copy[jj];
-				Eigen::Vector3f rpq = p - q;
-				double resnorm = rpq.norm();
-				resnormvec.push_back(resnorm);
-			}
-
-			// secondly, do iteratively re-weighted least squares
-			int numIter = iteration_number_;
-			if (corres_.size() < 10)
-				return ;
-
-			std::vector<double> s(corres_.size(), 1.0);
-
-
-			// for (int itr = 0; itr < numIter; itr++) {
-
-			const int nvariable = 6;	// 3 for rotation and 3 for translation
-			Eigen::MatrixXd JTJ(nvariable, nvariable);
-			Eigen::MatrixXd JTr(nvariable, 1);
-			Eigen::MatrixXd J(nvariable, 1);
-			JTJ.setZero();
-			JTr.setZero();
-
-			double r;
-			double r2 = 0.0;
-
-			for (int cr = 0; cr < corres_.size(); cr++) {
-				int ii = corres_[cr].first;
-				int jj = corres_[cr].second;
-				Eigen::Vector3f p, q;
-				p = pointcloud_[i][ii];
-				q = pcj_copy[jj];
-				Eigen::Vector3f rpq = p - q;
-
-				int c2 = cr;
-				double res = rpq.norm();
-
-				// weights of residuals derived using rho'(x)/x
-
-				s[c2] = robustcostWeight(res, 1.0, 1.0);
-
-				J.setZero();
-				J(1) = -q(2);
-				J(2) = q(1);
-				J(3) = -1;
-				r = rpq(0);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				J.setZero();
-				J(2) = -q(0);
-				J(0) = q(2);
-				J(4) = -1;
-				r = rpq(1);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				J.setZero();
-				J(0) = -q(1);
-				J(1) = q(0);
-				J(5) = -1;
-				r = rpq(2);
-				JTJ += J * J.transpose() * s[c2];
-				JTr += J * r * s[c2];
-				r2 += r * r * s[c2];
-
-				// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
-			}
-
-			Eigen::MatrixXd result(nvariable, 1);
-			result = -JTJ.llt().solve(JTr);
-
-			Eigen::Affine3d aff_mat;
-			aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
-				* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
-				* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
-			aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
-
-			Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
-			trans = delta * trans;
-			TransformPoints(pcj_copy, delta);
-		// }
-
-		// 	diff = (pretrans - trans).norm();
-		// 	std::cout << "Normed difference in trans -- " << diff << std::endl;
-		// 	std::cout << " ------------------------ " << std::endl;
-		// }
-		// else{
-		// 	break;
-		// }
-
-	}
+	// for (int itr = 0; itr < L1iter; itr++){
+	// 	// if(diff > tol){
+	// 		// pretrans = trans;
+	// 		std::cout << "Iteration number outer  -- " << itr << std::endl;
+	// 		resnormvec.clear();
+	// 		for (int cr = 0; cr < corres_.size(); cr++) {
+	// 			int ii = corres_[cr].first;
+	// 			int jj = corres_[cr].second;
+	// 			Eigen::Vector3f p, q;
+	// 			p = pointcloud_[i][ii];
+	// 			q = pcj_copy[jj];
+	// 			Eigen::Vector3f rpq = p - q;
+	// 			double resnorm = rpq.norm();
+	// 			resnormvec.push_back(resnorm);
+	// 		}
+	//
+	// 		// secondly, do iteratively re-weighted least squares
+	// 		int numIter = iteration_number_;
+	// 		if (corres_.size() < 10)
+	// 			return ;
+	//
+	// 		std::vector<double> s(corres_.size(), 1.0);
+	//
+	//
+	// 		// for (int itr = 0; itr < numIter; itr++) {
+	//
+	// 		const int nvariable = 6;	// 3 for rotation and 3 for translation
+	// 		Eigen::MatrixXd JTJ(nvariable, nvariable);
+	// 		Eigen::MatrixXd JTr(nvariable, 1);
+	// 		Eigen::MatrixXd J(nvariable, 1);
+	// 		JTJ.setZero();
+	// 		JTr.setZero();
+	//
+	// 		double r;
+	// 		double r2 = 0.0;
+	//
+	// 		for (int cr = 0; cr < corres_.size(); cr++) {
+	// 			int ii = corres_[cr].first;
+	// 			int jj = corres_[cr].second;
+	// 			Eigen::Vector3f p, q;
+	// 			p = pointcloud_[i][ii];
+	// 			q = pcj_copy[jj];
+	// 			Eigen::Vector3f rpq = p - q;
+	//
+	// 			int c2 = cr;
+	// 			double res = rpq.norm();
+	//
+	// 			// weights of residuals derived using rho'(x)/x
+	//
+	// 			s[c2] = robustcostWeight(res, 1.0, -2.0);
+	//
+	// 			J.setZero();
+	// 			J(1) = -q(2);
+	// 			J(2) = q(1);
+	// 			J(3) = -1;
+	// 			r = rpq(0);
+	// 			JTJ += J * J.transpose() * s[c2];
+	// 			JTr += J * r * s[c2];
+	// 			r2 += r * r * s[c2];
+	//
+	// 			J.setZero();
+	// 			J(2) = -q(0);
+	// 			J(0) = q(2);
+	// 			J(4) = -1;
+	// 			r = rpq(1);
+	// 			JTJ += J * J.transpose() * s[c2];
+	// 			JTr += J * r * s[c2];
+	// 			r2 += r * r * s[c2];
+	//
+	// 			J.setZero();
+	// 			J(0) = -q(1);
+	// 			J(1) = q(0);
+	// 			J(5) = -1;
+	// 			r = rpq(2);
+	// 			JTJ += J * J.transpose() * s[c2];
+	// 			JTr += J * r * s[c2];
+	// 			r2 += r * r * s[c2];
+	//
+	// 			// r2 += (par * (1.0 - sqrt(s[c2])) * (1.0 - sqrt(s[c2])));
+	// 		}
+	//
+	// 		Eigen::MatrixXd result(nvariable, 1);
+	// 		result = -JTJ.llt().solve(JTr);
+	//
+	// 		Eigen::Affine3d aff_mat;
+	// 		aff_mat.linear() = (Eigen::Matrix3d) Eigen::AngleAxisd(result(2), Eigen::Vector3d::UnitZ())
+	// 			* Eigen::AngleAxisd(result(1), Eigen::Vector3d::UnitY())
+	// 			* Eigen::AngleAxisd(result(0), Eigen::Vector3d::UnitX());
+	// 		aff_mat.translation() = Eigen::Vector3d(result(3), result(4), result(5));
+	//
+	// 		Eigen::Matrix4f delta = aff_mat.matrix().cast<float>();
+	// 		trans = delta * trans;
+	// 		TransformPoints(pcj_copy, delta);
+	// 		// }
+	//
+	// 	// 	diff = (pretrans - trans).norm();
+	// 	// 	std::cout << "Normed difference in trans -- " << diff << std::endl;
+	// 	// 	std::cout << " ------------------------ " << std::endl;
+	// 	// }
+	// 	// else{
+	// 	// 	break;
+	// 	// }
+	//
+	// }
 
 	// calculate scale from here
 
-	int numres = resnormvec.size();
+	// int numres = resnormvec.size();
 	// copy the vector and sort that.
-	std::sort(resnormvec.begin(), resnormvec.end());
-	int ind;
-	double median;
+	// std::sort(resnormvec.begin(), resnormvec.end());
+	// int ind;
+	// double median;
 	// if (numres%2 == 0){
 	// 	median = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/2;
 	// }
@@ -583,20 +594,22 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	// for(auto& element : resnormvec)
     // 	element = std::abs(element - median);
 
-	if (numres%2 == 0){
-		globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
-	}
-	else{
-		ind = (numres-1)/2 ;
-		globalc = resnormvec[ind]/0.675;
-	}
-	globalc = 0.08;
+	// if (numres%2 == 0){
+	// 	globalc = (resnormvec[(numres/2)-1] + resnormvec[numres/2])/(2*0.675);
+	// }
+	// else{
+	// 	ind = (numres-1)/2 ;
+	// 	globalc = resnormvec[ind]/0.675;
+	// }
+	globalc = 0.05;
+	int graduated_ind = -1;
 
 	// Main iteration cycle starts
 	for (int itr = 0; itr < ConvergIter; itr++){
 		// if(diff > tol){
+			int numlarge = 0;
 			pretrans = trans;
-			std::cout << "Iteration number outer  -- " << itr << std::endl;
+			// std::cout << "Iteration number outer  -- " << itr << std::endl;
 			resnormvec.clear();
 			for (int cr = 0; cr < corres_.size(); cr++) {
 				int ii = corres_[cr].first;
@@ -611,46 +624,62 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 			}
 
 			// if  (itr == 28){
-			std::cout << "Starting alpha and c " << std::endl;
-			std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+			// std::cout << "Starting alpha and c " << std::endl;
+			// std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
 
 			// NormalizeRes(resnormvec);
 			// }
 
 		    // firstly, keep c constant and maximize with respect to alpha
-			if(itr % 4 == 0){
+			if(itr % 4 == 0 && itr != 0){
+				// std::cout << "Iteration number outer  -- " << itr << std::endl;
+				// graduated_ind += 1;
+			// }
 				std::fill(likevecalpha.begin(), likevecalpha.end(), 0.0);
 				for(int ip =0; ip < lenalpha; ip++){
 					totallike = 0.0;
+					numlarge = 0;
 					for(auto it2 : resnormvec){
-						if (it2 <= 10){
+						if (it2 <= 100){
 							totallike = totallike + robustcost(it2,c[mincind], alpha[ip]) + log(constTable[ip][mincind]);
 						}
+						else{
+							numlarge += 1;
+						}
 					}
-					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[maxcind] << " is " << totallike << endl;
+					// std::cout << "Likelihood for  alpha = " << alpha[ip] << " and "<< " c = "<< c[mincind] << " is " << totallike << endl;
 					likevecalpha[ip] = totallike;
+					// std::cout << "likelihood value for " << alpha[ip] << " -- "  << likevecalpha[ip] << std::endl;
 				}
 
 				auto smallest = std::min_element( likevecalpha.begin(), likevecalpha.end());
-		        minalphaind = std::distance(likevecalpha.begin(), smallest);
-		        bestalpha = alpha[minalphaind];
+				minalphaind = std::distance(likevecalpha.begin(), smallest);
+				bestalpha = alpha[minalphaind];
 
 				// secondly, keep alpha constant and maximize with respect to c
 				std::fill(likevecc.begin(), likevecc.end(), 0.0);
 				for(int jq =0; jq < lenc; jq++){
 					totallike = 0.0;
 					for(auto it2 : resnormvec){
-						if (it2 <= 10){
+						if (it2 <= 100){
 							totallike = totallike + robustcost(it2,c[jq], alpha[minalphaind]) + log(constTable[minalphaind][jq]);
 						}
 					}
-					// std::cout << "Likelihood for  alpha = " << alpha[maxalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
+					// std::cout << "Likelihood for  alpha = " << alpha[minalphaind] << " and "<< " c = "<< c[jq] << " is " << totallike << endl;
 					likevecc[jq] = totallike;
 				}
 
 				auto smallest2 = std::min_element( likevecc.begin(), likevecc.end());
 	        	mincind = std::distance(likevecc.begin(), smallest2);
 	        	bestc = c[mincind];
+
+
+
+				std::cout << "NUM LARGE " << numlarge << std::endl;
+				std::cout << "Learned alpha and c " << std::endl;
+				std::cout << alpha[minalphaind] << " , " << c[mincind] << std::endl;
+				// std::cout << "Min Likelihood alpha " << likevecalpha[minalphaind] << std::endl;
+				// std::cout << "Min Likelihood c " << likevecc[mincind] << std::endl;
 			}
 
 			// if  (itr == 28){
@@ -711,7 +740,9 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 				double res = rpq.norm();
 
 				// weights of residuals derived using rho'(x)/x
-
+				// if(res/globalc > 10.0){
+				// 	std::cout << "RES GREATER THAN 10 !!" << std::endl;
+				// }
 				s[c2] = robustcostWeight(res/globalc, c[mincind], alpha[minalphaind]);
 
 				J.setZero();
@@ -773,7 +804,6 @@ void CApp::OptimizePairwise(std::vector<std::vector<double>> content)
 	std::cout << "Best c -- " << c[mincind] << endl;
 	std::cout << "Global c -- " << globalc << endl;
 	std::cout << " ------------------------ " << std::endl;
-
 	TransOutput_ = trans * TransOutput_;
 }
 
@@ -946,7 +976,7 @@ double CApp::robustcost(double r, double c, double alpha){
 }
 double CApp::robustcostWeight(double r, double c, double alpha){
 	double weight;
-	if(std::abs(r) <= 10){
+	if(std::abs(r) <= 100){
 		if (alpha == 2){
 	    	weight = 1;}
 		else if (alpha == 0){
@@ -963,7 +993,7 @@ double CApp::robustcostWeight(double r, double c, double alpha){
 		return weight;
 	}
 	else{
-		return 0.00000001;
+		return 0.0000001;
 	}
 }
 
